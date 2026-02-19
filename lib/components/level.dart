@@ -3,14 +3,14 @@ import 'package:desperate_action/components/collision_blocks.dart';
 import 'package:desperate_action/components/ground_enemy.dart';
 import 'package:desperate_action/components/jumping_enemy.dart';
 import 'package:desperate_action/components/player.dart';
-import 'package:flame_forge2d/flame_forge2d.dart';
+import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 
 import 'platform.dart';
 
 // класс world - это специальный класс
 // для инициализации мира, в котором всё и происходит
-class Level extends Forge2DWorld {
+class Level extends World {
   final String levelName;
   late Player player;
   Level({required this.levelName, required this.player});
@@ -24,7 +24,7 @@ class Level extends Forge2DWorld {
   static late double mapSizeX;
   // сюда добавляем все блоки, по которым
   // игрок может двигаться и с которыми может сталкиваться
-  static final List<CollisionBlocks> collisionBlocks = [];
+  // static final List<CollisionBlocks> collisionBlocks = [];
 
   @override
   FutureOr<void> onLoad() async {
@@ -55,9 +55,8 @@ class Level extends Forge2DWorld {
         final block = CollisionBlocks()
           ..position = collision.position
           ..size = collision.size;
-        collisionBlocks.add(block);
+        add(block);
       }
-      addAll(collisionBlocks);
     }
   }
 
@@ -80,16 +79,12 @@ class Level extends Forge2DWorld {
             add(player);
             break;
           case 'EnemyOnGround':
-            final maxMoveBlocks = character.properties.getValue(
-              'canMoveBlocks',
-            );
             final moveDirection = character.properties.getValue(
               'startDirection',
             );
             final groundEnemy = GroundEnemy(
               position: character.position,
               size: character.size,
-              maxMoveBlocks: maxMoveBlocks,
               moveDirection: moveDirection,
             );
             groundEnemy.priority = -1;

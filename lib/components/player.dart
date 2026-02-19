@@ -79,7 +79,7 @@ class Player extends SpriteAnimationGroupComponent
     super.onCollisionStart(intersectionPoints, other);
     if (other is GroundEnemy) {
       if (velocity.y > 0) {
-        other.kill();
+        other.die();
         velocity.y = -_bounceHeight;
       } else {
         // ignore: avoid_print

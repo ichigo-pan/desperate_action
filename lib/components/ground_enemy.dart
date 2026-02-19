@@ -1,6 +1,8 @@
 import 'dart:async';
-import 'package:desperate_action/components/level.dart';
+import 'package:desperate_action/components/collision_blocks.dart';
+import 'package:desperate_action/components/platform.dart';
 import 'package:desperate_action/desperate_action.dart';
+import 'package:desperate_action/utils/actor_blocks_collision.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
@@ -16,26 +18,16 @@ enum GroundEnemyState {
 
 class GroundEnemy extends SpriteAnimationGroupComponent
     with HasGameReference<DesperateAction>, CollisionCallbacks {
-  final int maxMoveBlocks;
   int moveDirection;
-  late int startPosition;
-  late int moveRangeX;
-  late final int maxLeftPos;
-  late final int maxRightPos;
 
   GroundEnemy({
     required super.position,
     required super.size,
-    required this.maxMoveBlocks,
     required this.moveDirection,
-  }) {
-    startPosition = (position.x).toInt();
-    moveRangeX = Level.tileWidth * maxMoveBlocks;
-    maxLeftPos = startPosition - moveRangeX;
-    maxRightPos = startPosition + moveRangeX;
-  }
+  });
 
-  final double moveSpeed = 20;
+  final double moveSpeed = 30;
+  final double gravity = 9.8;
   final Vector2 velocity = Vector2.zero();
   final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
     positionX: 18,
@@ -43,20 +35,20 @@ class GroundEnemy extends SpriteAnimationGroupComponent
     width: 37,
     height: 27,
   );
-
+  bool startMoving = false;
+  bool isOnGround = false;
   bool leftCollision = false;
   bool rightCollision = false;
 
   @override
   FutureOr<void> onLoad() {
-    // debugMode = true;
+    debugMode = true;
     _loadAllAnimations();
     current = GroundEnemyState.run;
     add(
       RectangleHitbox(
         position: Vector2(hitbox.positionX, hitbox.positionY),
         size: Vector2(hitbox.width, hitbox.height),
-        collisionType: CollisionType.passive,
       ),
     );
     return super.onLoad();
@@ -65,22 +57,43 @@ class GroundEnemy extends SpriteAnimationGroupComponent
   @override
   void update(double dt) {
     super.update(dt);
-    // _changeMoveDirection();
-    _move(dt);
+    _checkWherePlayer();
+    if (startMoving) _move(dt);
+    _changeMoveDirection();
+    if (!isOnGround) _applyGravity(dt);
+    _deleteIfFall();
   }
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    // TODO: implement onCollision
     super.onCollision(intersectionPoints, other);
+    if (other is CollisionBlocks || other is Platform) {
+      handleCollisionWithSolid(other, this);
+    }
+  }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
+    if (other is CollisionBlocks || other is Platform) {
+      if (isOnGround) {
+        isOnGround = false;
+      }
+    }
+  }
+
+  void _checkWherePlayer() {
+    final camera = game.camera.viewfinder;
+    if (camera.position.x + game.cameraWidth >= position.x) startMoving = true;
   }
 
   void _changeMoveDirection() {
-    if (startPosition - position.x - width / 2 - hitbox.positionX >
-            moveRangeX ||
-        position.x - width > startPosition && scale.x < 0) {
+    if ((leftCollision || rightCollision) && isOnGround) {
+      rightCollision = false;
+      leftCollision = false;
       moveDirection *= -1;
       flipHorizontallyAroundCenter();
+      position.x += moveDirection > 0 ? -10 : 10;
     }
   }
 
@@ -108,7 +121,16 @@ class GroundEnemy extends SpriteAnimationGroupComponent
     position.x += velocity.x * dt;
   }
 
-  void kill() async {
+  void _applyGravity(double dt) {
+    velocity.y += gravity;
+    position.y += velocity.y * dt;
+  }
+
+  void _deleteIfFall() {
+    if (position.y > game.cameraHeight) removeFromParent();
+  }
+
+  void die() async {
     current = GroundEnemyState.hit;
     await animationTicker?.completed;
     removeFromParent();
