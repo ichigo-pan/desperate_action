@@ -22,9 +22,7 @@ class Level extends World {
   // делаем эти переменные static
   static late int tileWidth;
   static late double mapSizeX;
-  // сюда добавляем все блоки, по которым
-  // игрок может двигаться и с которыми может сталкиваться
-  // static final List<CollisionBlocks> collisionBlocks = [];
+  static int playerLifes = 3;
 
   @override
   FutureOr<void> onLoad() async {
@@ -44,6 +42,7 @@ class Level extends World {
     _loadCharacters();
     _loadLuckyBlocks();
     _loadFallingPlatforms();
+
     return super.onLoad();
   }
 

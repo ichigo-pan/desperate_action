@@ -10,6 +10,7 @@ class CameraFollowSystem extends Component
   CameraFollowSystem({required this.player});
 
   late double screenHalfWidth;
+  static bool isMoving = false;
 
   @override
   FutureOr<void> onLoad() {
@@ -24,6 +25,7 @@ class CameraFollowSystem extends Component
     final playerDir = player.scale.x;
     final camera = game.camera.viewfinder;
     final cameraCenter = camera.position.x + screenHalfWidth;
+    isMoving = false;
     double? target;
 
     //проверить если середина игрока дошла до середины камеры --
@@ -42,61 +44,13 @@ class CameraFollowSystem extends Component
     }
 
     if (target != null) {
-      camera.position += Vector2((target - camera.position.x) * 8 * dt, 0);
+      final newX = (target - camera.position.x) * 8 * dt;
+      if (camera.position.x + newX > 0 &&
+          camera.position.x + newX < Level.mapSizeX - game.cameraWidth &&
+          newX.abs() > 0.1) {
+        camera.position += Vector2(newX, 0);
+        isMoving = true;
+      }
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  //   final camera = game.camera.viewfinder;
-  //   final cameraLeft = camera.position.x;
-  //   // final cameraRight = camera.position.x + screenCenterX;
-
-  //   final leftDeadzone = cameraLeft;
-  //   final rightDeadzone = cameraLeft + screenCenterX;
-
-  //   final playerLeft = player.position.x - player.width * 1.5;
-  //   final playerRight = player.position.x + player.hitbox.width;
-
-  //   double? targetX;
-
-  //   // если игрок вышел за правую границу — двигаем камеру вправо
-  //   if (playerRight > rightDeadzone) {
-  //     targetX = playerRight - screenCenterX;
-  //   }
-  //   // если игрок вышел за левую границу — двигаем камеру влево
-  //   else if (playerLeft < leftDeadzone) {
-  //     targetX = playerLeft; // камера догоняет левый край игрока
-  //   }
-
-  //   if (targetX != null) {
-  //     camera.position += Vector2((targetX - camera.position.x) * 8 * dt, 0);
-  //   }
-  // }

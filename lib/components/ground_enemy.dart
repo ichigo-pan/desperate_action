@@ -1,8 +1,5 @@
 import 'dart:async';
-import 'package:desperate_action/components/collision_blocks.dart';
-import 'package:desperate_action/components/platform.dart';
 import 'package:desperate_action/desperate_action.dart';
-import 'package:desperate_action/utils/actor_blocks_collision.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
@@ -29,26 +26,49 @@ class GroundEnemy extends SpriteAnimationGroupComponent
   final double moveSpeed = 30;
   final double gravity = 9.8;
   final Vector2 velocity = Vector2.zero();
-  final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
-    positionX: 18,
+  static final CustomRectangleHitbox headHitbox = CustomRectangleHitbox(
+    positionX: 20,
     positionY: 5,
-    width: 37,
-    height: 27,
+    width: 25,
+    height: 4,
+  );
+  static final CustomRectangleHitbox sideHitbox = CustomRectangleHitbox(
+    positionX: 20,
+    positionY: 13,
+    width: 5,
+    height: 7,
+  );
+  static final CustomRectangleHitbox bottomHitbox = CustomRectangleHitbox(
+    positionX: 38,
+    positionY: 28,
+    width: 5,
+    height: 4,
   );
   bool startMoving = false;
   bool isOnGround = false;
-  bool leftCollision = false;
-  bool rightCollision = false;
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     _loadAllAnimations();
     current = GroundEnemyState.run;
     add(
-      RectangleHitbox(
-        position: Vector2(hitbox.positionX, hitbox.positionY),
-        size: Vector2(hitbox.width, hitbox.height),
+      SideHitbox(
+        position: Vector2(sideHitbox.positionX, sideHitbox.positionY),
+        size: Vector2(sideHitbox.width, sideHitbox.height),
+      ),
+    );
+    add(
+      BottomHitbox(
+        position: Vector2(bottomHitbox.positionX, bottomHitbox.positionY),
+        size: Vector2(bottomHitbox.width, bottomHitbox.height),
+      ),
+    );
+    add(
+      HeadHitbox(
+        position: Vector2(headHitbox.positionX, headHitbox.positionY),
+        size: Vector2(headHitbox.width, headHitbox.height),
+        collisionType: CollisionType.passive,
       ),
     );
     return super.onLoad();
@@ -58,43 +78,18 @@ class GroundEnemy extends SpriteAnimationGroupComponent
   void update(double dt) {
     super.update(dt);
     _checkWherePlayer();
-    if (startMoving) _move(dt);
-    _changeMoveDirection();
-    if (!isOnGround) _applyGravity(dt);
+    if (!isOnGround) {
+      _applyGravity(dt);
+    } else if (startMoving) {
+      _move(dt);
+    }
     _deleteIfFall();
-  }
-
-  @override
-  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    super.onCollision(intersectionPoints, other);
-    if (other is CollisionBlocks || other is Platform) {
-      handleCollisionWithSolid(other, this);
-    }
-  }
-
-  @override
-  void onCollisionEnd(PositionComponent other) {
-    super.onCollisionEnd(other);
-    if (other is CollisionBlocks || other is Platform) {
-      if (isOnGround) {
-        isOnGround = false;
-      }
-    }
+    isOnGround = false;
   }
 
   void _checkWherePlayer() {
     final camera = game.camera.viewfinder;
     if (camera.position.x + game.cameraWidth >= position.x) startMoving = true;
-  }
-
-  void _changeMoveDirection() {
-    if ((leftCollision || rightCollision) && isOnGround) {
-      rightCollision = false;
-      leftCollision = false;
-      moveDirection *= -1;
-      flipHorizontallyAroundCenter();
-      position.x += moveDirection > 0 ? -10 : 10;
-    }
   }
 
   void _loadAllAnimations() {

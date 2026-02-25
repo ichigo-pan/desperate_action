@@ -4,5 +4,14 @@ import 'package:flutter/material.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(GameWidget(game: DesperateAction()));
+  // final DesperateAction game = DesperateAction();
+  runApp(
+    GameWidget(
+      game: DesperateAction(),
+      // overlayBuilderMap: {
+      //   'PlayerDied': (context, DesperateAction game) =>
+      //       PlayerDiedOverlay(game: game),
+      // },
+    ),
+  );
 }

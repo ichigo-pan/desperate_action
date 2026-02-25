@@ -20,7 +20,7 @@ class Platform extends SpriteComponent with HasGameReference<DesperateAction> {
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     sprite = Sprite(game.images.fromCache('FallingPlatform/Platform3.png'));
     add(RectangleHitbox(collisionType: CollisionType.passive));
     return super.onLoad();
@@ -29,29 +29,29 @@ class Platform extends SpriteComponent with HasGameReference<DesperateAction> {
   @override
   void update(double dt) {
     super.update(dt);
-    _checkPlayerY();
+    // _checkPlayerY();
     if (doFall) {
       _fall(dt);
     }
   }
 
-  void _checkPlayerY() {
-    final playerX = game.player.scale.x > 0
-        ? game.player.position.x +
-              game.player.hitbox.positionX +
-              game.player.hitbox.width
-        : game.player.position.x -
-              game.player.hitbox.positionX -
-              game.player.hitbox.width;
-    if (ignoreBottom) {
-      final platformCenter = position.x + width / 2;
-      if ((platformCenter - playerX).abs() < width / 2) {
-        if (game.player.position.y > position.y + height) {
-          doFall = true;
-        }
-      }
-    }
-  }
+  // void _checkPlayerY() {
+  //   final playerX = game.player.scale.x > 0
+  //       ? game.player.position.x +
+  //             game.player.hitbox.positionX +
+  //             game.player.hitbox.width
+  //       : game.player.position.x -
+  //             game.player.hitbox.positionX -
+  //             game.player.hitbox.width;
+  //   if (ignoreBottom) {
+  //     final platformCenter = position.x + width / 2;
+  //     if ((platformCenter - playerX).abs() < width / 2) {
+  //       if (game.player.position.y > position.y + height) {
+  //         doFall = true;
+  //       }
+  //     }
+  //   }
+  // }
 
   void _fall(double dt) {
     if (position.y > game.cameraHeight) removeFromParent();

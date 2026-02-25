@@ -1,10 +1,5 @@
 import 'dart:async';
-import 'package:desperate_action/components/collision_blocks.dart';
-import 'package:desperate_action/components/ground_enemy.dart';
-import 'package:desperate_action/components/jumping_enemy.dart';
-import 'package:desperate_action/components/platform.dart';
 import 'package:desperate_action/desperate_action.dart';
-import 'package:desperate_action/utils/actor_blocks_collision.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
@@ -37,28 +32,52 @@ class Player extends SpriteAnimationGroupComponent
 
   int xMovement = 0;
   bool pressedJump = false;
-  bool isOnGround = true;
-  bool leftCollision = false;
-  bool rightCollision = false;
+  bool isOnGround = false;
 
-  final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
-    positionX: 10,
+  // final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
+  //   positionX: 10,
+  //   positionY: 5,
+  //   width: 14,
+  //   height: 27,
+  // );
+
+  final CustomRectangleHitbox headHitbox = CustomRectangleHitbox(
+    positionX: 7,
     positionY: 5,
-    width: 14,
-    height: 27,
+    width: 19,
+    height: 4,
+  );
+  final CustomRectangleHitbox sideHitbox = CustomRectangleHitbox(
+    positionX: 24,
+    positionY: 14,
+    width: 6,
+    height: 11,
+  );
+  final CustomRectangleHitbox bottomHitbox = CustomRectangleHitbox(
+    positionX: 10,
+    positionY: 30,
+    width: 13,
+    height: 5,
   );
 
   @override
   FutureOr<void> onLoad() {
     // debugMode = true;
     _loadAllAnimations();
-    add(
-      RectangleHitbox(
-        size: Vector2(hitbox.width, hitbox.height),
-        position: Vector2(hitbox.positionX, hitbox.positionY),
-        isSolid: true,
+    addAll([
+      HeadHitbox(
+        position: Vector2(headHitbox.positionX, headHitbox.positionY),
+        size: Vector2(headHitbox.width, headHitbox.height),
       ),
-    );
+      SideHitbox(
+        position: Vector2(sideHitbox.positionX, sideHitbox.positionY),
+        size: Vector2(sideHitbox.width, sideHitbox.height),
+      ),
+      BottomHitbox(
+        position: Vector2(bottomHitbox.positionX, bottomHitbox.positionY),
+        size: Vector2(bottomHitbox.width, bottomHitbox.height),
+      ),
+    ]);
     return super.onLoad();
   }
 
@@ -66,75 +85,40 @@ class Player extends SpriteAnimationGroupComponent
   void update(double dt) {
     super.update(dt);
     _updateMovements(dt);
-    _applyGravity(dt);
+    if (!isOnGround) _applyGravity(dt);
     _changeAnimation();
     _changeSpriteScale();
+    isOnGround = false;
   }
 
-  @override
-  void onCollisionStart(
-    Set<Vector2> intersectionPoints,
-    PositionComponent other,
-  ) {
-    super.onCollisionStart(intersectionPoints, other);
-    if (other is GroundEnemy) {
-      if (velocity.y > 0) {
-        other.die();
-        velocity.y = -_bounceHeight;
-      } else {
-        // ignore: avoid_print
-        print('bonk!');
-      }
-    }
-    if (other is JumpingEnemy) {
-      // ignore: avoid_print
-      print('Air bonk!');
-    }
-    if (other is Platform) {
-      if (other.ignoreBottom && other.velocity.y > 0) {
-        print('Die');
-      }
-    }
-  }
-
-  @override
-  void onCollisionEnd(PositionComponent other) {
-    super.onCollisionEnd(other);
-    if (other is CollisionBlocks) {
-      if (isOnGround) {
-        isOnGround = false;
-      }
-      if (rightCollision) {
-        rightCollision = false;
-      }
-      if (leftCollision) {
-        leftCollision = false;
-      }
-    }
-    if (other is Platform) {
-      if (isOnGround) {
-        isOnGround = false;
-      }
-    }
-  }
-
-  @override
-  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
-    super.onCollision(intersectionPoints, other);
-    if (other is CollisionBlocks) {
-      handleCollisionWithSolid(other, this);
-    }
-    if (other is Platform) {
-      if (other.velocity.y == 0) {
-        handleCollisionWithSolid(
-          other,
-          this,
-          ignoreBottom: other.ignoreBottom,
-          fallDown: other.fallDown,
-        );
-      }
-    }
-  }
+  // @override
+  // void onCollisionStart(
+  //   Set<Vector2> intersectionPoints,
+  //   PositionComponent other,
+  // ) {
+  //   super.onCollisionStart(intersectionPoints, other);
+  //   if (other is GroundEnemy) {
+  //     if (velocity.y != 0) {
+  //       other.die();
+  //       velocity.y = -_bounceHeight;
+  //     } else {
+  //       // ignore: avoid_print
+  //       print('bonk!');
+  //       game.score.updateLifeCount();
+  //     }
+  //   }
+  //   if (other is JumpingEnemy) {
+  //     // ignore: avoid_print
+  //     print('Air bonk!');
+  //     game.score.updateLifeCount();
+  //   }
+  //   if (other is Platform) {
+  //     if (other.ignoreBottom && other.velocity.y > 0) {
+  //       print('Die');
+  //       game.score.updateLifeCount();
+  //     }
+  //   }
+  // }
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
@@ -142,12 +126,10 @@ class Player extends SpriteAnimationGroupComponent
     xMovement = 0;
     final isKeyLeft =
         (keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
-            keysPressed.contains(LogicalKeyboardKey.keyA)) &&
-        (!leftCollision);
+        keysPressed.contains(LogicalKeyboardKey.keyA));
     final isKeyRight =
         (keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
-            keysPressed.contains(LogicalKeyboardKey.keyD)) &&
-        (!rightCollision);
+        keysPressed.contains(LogicalKeyboardKey.keyD));
 
     xMovement += isKeyLeft ? -1 : 0;
     xMovement += isKeyRight ? 1 : 0;
@@ -200,8 +182,14 @@ class Player extends SpriteAnimationGroupComponent
   }
 
   void _changeSpriteScale() {
-    if (velocity.x < 0 && scale.x > 0) flipHorizontallyAroundCenter();
-    if (velocity.x > 0 && scale.x < 0) flipHorizontallyAroundCenter();
+    if (velocity.x < 0 && scale.x > 0) {
+      flipHorizontallyAroundCenter();
+      position.x += 5;
+    }
+    if (velocity.x > 0 && scale.x < 0) {
+      flipHorizontallyAroundCenter();
+      position.x -= 5;
+    }
   }
 
   void _jump(double dt) {

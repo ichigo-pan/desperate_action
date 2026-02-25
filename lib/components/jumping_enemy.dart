@@ -47,7 +47,7 @@ class JumpingEnemy extends SpriteAnimationGroupComponent
   @override
   void update(double dt) {
     super.update(dt);
-    _checkWherePlayer();
+    // _checkWherePlayer();
     if (_isPlayerNear) {
       _move(dt);
       _respawnWhenNotInCamera();
@@ -84,19 +84,19 @@ class JumpingEnemy extends SpriteAnimationGroupComponent
     position.y += velocity.y * dt;
   }
 
-  void _checkWherePlayer() {
-    final player = game.player.scale.x > 0
-        ? game.player.position.x +
-              game.player.hitbox.positionX +
-              game.player.hitbox.width
-        : game.player.position.x -
-              game.player.hitbox.positionX -
-              game.player.hitbox.width;
-    final birdCenter = position.x + width / 2;
-    if ((birdCenter - player).abs() < 20) {
-      _isPlayerNear = true;
-    }
-  }
+  // void _checkWherePlayer() {
+  //   final player = game.player.scale.x > 0
+  //       ? game.player.position.x +
+  //             game.player.hitbox.positionX +
+  //             game.player.hitbox.width
+  //       : game.player.position.x -
+  //             game.player.hitbox.positionX -
+  //             game.player.hitbox.width;
+  //   final birdCenter = position.x + width / 2;
+  //   if ((birdCenter - player).abs() < 20) {
+  //     _isPlayerNear = true;
+  //   }
+  // }
 
   void _respawnWhenNotInCamera() {
     final cameraLeftX = game.camera.viewfinder.position.x;
