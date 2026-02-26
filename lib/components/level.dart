@@ -115,13 +115,13 @@ class Level extends World {
       for (final object in fallingPlatformsLayer.objects) {
         switch (object.class_) {
           case 'Platform':
-            final ignoreBottom = object.properties.getValue('ignoreBottom');
-            final fallDown = object.properties.getValue('fallDown');
+            final fallOnPlayer = object.properties.getValue('fallOnPlayer');
+            final fallWithPlayer = object.properties.getValue('fallWithPlayer');
             final platform = Platform(
               position: object.position,
               size: object.size,
-              ignoreBottom: ignoreBottom,
-              fallDown: fallDown,
+              fallOnPlayer: fallOnPlayer,
+              fallWithPlayer: fallWithPlayer,
             );
             platform.priority = -2;
             add(platform);

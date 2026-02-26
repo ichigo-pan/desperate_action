@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'package:desperate_action/components/collision_blocks.dart';
+import 'package:desperate_action/components/ground_enemy.dart';
+import 'package:desperate_action/components/jumping_enemy.dart';
+import 'package:desperate_action/components/platform.dart';
 import 'package:desperate_action/desperate_action.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
 import 'package:flame/collisions.dart';
@@ -17,10 +21,8 @@ enum PlayerState {
 }
 
 class Player extends SpriteAnimationGroupComponent
-    with
-        HasGameReference<DesperateAction>,
-        KeyboardHandler,
-        CollisionCallbacks {
+    with HasGameReference<DesperateAction>, KeyboardHandler, CollisionCallbacks
+    implements CustomHitboxesCollision, HasCollisionCategory {
   Player({super.position, super.size});
 
   final Vector2 velocity = Vector2.zero();
@@ -41,21 +43,21 @@ class Player extends SpriteAnimationGroupComponent
   //   height: 27,
   // );
 
-  final CustomRectangleHitbox headHitbox = CustomRectangleHitbox(
+  final CustomRectangleHitboxSize headHitbox = CustomRectangleHitboxSize(
     positionX: 7,
     positionY: 5,
     width: 19,
     height: 4,
   );
-  final CustomRectangleHitbox sideHitbox = CustomRectangleHitbox(
+  final CustomRectangleHitboxSize sideHitbox = CustomRectangleHitboxSize(
     positionX: 24,
     positionY: 14,
     width: 6,
     height: 11,
   );
-  final CustomRectangleHitbox bottomHitbox = CustomRectangleHitbox(
+  final CustomRectangleHitboxSize bottomHitbox = CustomRectangleHitboxSize(
     positionX: 10,
-    positionY: 30,
+    positionY: 27,
     width: 13,
     height: 5,
   );
@@ -65,15 +67,18 @@ class Player extends SpriteAnimationGroupComponent
     // debugMode = true;
     _loadAllAnimations();
     addAll([
-      HeadHitbox(
+      CustomHitbox(
+        side: HitboxSide.head,
         position: Vector2(headHitbox.positionX, headHitbox.positionY),
         size: Vector2(headHitbox.width, headHitbox.height),
       ),
-      SideHitbox(
+      CustomHitbox(
+        side: HitboxSide.side,
         position: Vector2(sideHitbox.positionX, sideHitbox.positionY),
         size: Vector2(sideHitbox.width, sideHitbox.height),
       ),
-      BottomHitbox(
+      CustomHitbox(
+        side: HitboxSide.bottom,
         position: Vector2(bottomHitbox.positionX, bottomHitbox.positionY),
         size: Vector2(bottomHitbox.width, bottomHitbox.height),
       ),
@@ -90,6 +95,9 @@ class Player extends SpriteAnimationGroupComponent
     _changeSpriteScale();
     isOnGround = false;
   }
+
+  @override
+  CollisionCategory get collisionCategory => CollisionCategory.player;
 
   // @override
   // void onCollisionStart(
@@ -110,7 +118,7 @@ class Player extends SpriteAnimationGroupComponent
   //   if (other is JumpingEnemy) {
   //     // ignore: avoid_print
   //     print('Air bonk!');
-  //     game.score.updateLifeCount();
+  //     die()
   //   }
   //   if (other is Platform) {
   //     if (other.ignoreBottom && other.velocity.y > 0) {
@@ -204,4 +212,98 @@ class Player extends SpriteAnimationGroupComponent
     velocity.y = velocity.y.clamp(-jumpForce, maxVelocity);
     position.y += velocity.y * dt;
   }
+
+  void _dontPushThroughCeiling() {
+    if (velocity.y < 0) {
+      velocity.y = 0;
+    }
+  }
+
+  void _dontPushThroughWalls(block) {
+    if (velocity.x > 0) {
+      // игрок слева от блока
+      position.x =
+          block.x -
+          sideHitbox.width -
+          bottomHitbox.width -
+          bottomHitbox.positionX;
+    } else if (velocity.x < 0) {
+      // игрок справа от блока
+      position.x =
+          block.x +
+          block.width +
+          sideHitbox.width +
+          bottomHitbox.width +
+          bottomHitbox.positionX;
+    }
+    velocity.x = 0.0;
+  }
+
+  void die() {
+    game.score.updateLifeCount();
+  }
+
+  @override
+  void handleCollision(
+    HitboxSide side,
+    ShapeHitbox other,
+    CollisionPhase phase,
+    CollisionCategory category,
+  ) {
+    // head collisions
+    if (side == HitboxSide.head) {
+      if (category == CollisionCategory.solid &&
+          phase == CollisionPhase.start) {
+        _dontPushThroughCeiling();
+      }
+    }
+
+    // side collisions
+    if (side == HitboxSide.side) {
+      if (phase == CollisionPhase.stay && category == CollisionCategory.solid) {
+        _dontPushThroughWalls(other.parent);
+      }
+    }
+
+    // bottom collisions
+    if (side == HitboxSide.bottom) {
+      if (category == CollisionCategory.solid && phase == CollisionPhase.stay) {
+        isOnGround = true;
+      }
+    }
+  }
+
+  //   @override
+  //   void onBottomCollision(
+  //     ShapeHitbox other,
+  //     CollisionPhase phase,
+  //     CollisionCategory category,
+  //   ) {
+  //     if ()
+  //     if (category == CollisionCategory.solid && phase == CollisionPhase.stay) {
+  //       isOnGround = true;
+  //     }
+  //   }
+
+  //   @override
+  //   void onHeadCollision(
+  //     ShapeHitbox other,
+  //     CollisionPhase phase,
+  //     CollisionCategory category,
+  //   ) {
+  //     if (category == CollisionCategory.solid && phase == CollisionPhase.start) {
+  //       _dontPushThroughCeiling();
+  //     }
+  //   }
+
+  //   @override
+  //   void onSideCollision(
+  //     ShapeHitbox other,
+  //     CollisionPhase phase,
+  //     CollisionCategory category,
+  //   ) {
+  //     if (phase == CollisionPhase.stay && category == CollisionCategory.solid) {
+  //       _dontPushThroughWalls(other.parent);
+  //     }
+  //   }
 }

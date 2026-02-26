@@ -43,7 +43,7 @@
         "level-1.tmx"
     ],
     "project": "desperate_action.tiled-project",
-    "property.type": "bool",
+    "property.type": "object",
     "recentFiles": [
         "level-1.tmx",
         "kenney_tilemap_packed.tsx",
