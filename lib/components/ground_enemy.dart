@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:desperate_action/components/collision_blocks.dart';
+import 'package:desperate_action/components/platform.dart';
 import 'package:desperate_action/desperate_action.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
 import 'package:flame/collisions.dart';
@@ -14,7 +16,7 @@ enum GroundEnemyState {
 }
 
 class GroundEnemy extends SpriteAnimationGroupComponent
-    with HasGameReference<DesperateAction>, CollisionCallbacks {
+    with HasGameReference<DesperateAction>, CollisionCallbacks, AABBcollision {
   int moveDirection;
 
   GroundEnemy({
@@ -26,49 +28,25 @@ class GroundEnemy extends SpriteAnimationGroupComponent
   final double moveSpeed = 30;
   final double gravity = 9.8;
   final Vector2 velocity = Vector2.zero();
-  static final CustomRectangleHitbox headHitbox = CustomRectangleHitbox(
-    positionX: 20,
-    positionY: 5,
-    width: 25,
-    height: 4,
-  );
-  static final CustomRectangleHitbox sideHitbox = CustomRectangleHitbox(
-    positionX: 20,
-    positionY: 13,
-    width: 5,
-    height: 7,
-  );
-  static final CustomRectangleHitbox bottomHitbox = CustomRectangleHitbox(
-    positionX: 38,
-    positionY: 28,
-    width: 5,
-    height: 4,
+
+  static final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
+    positionX: 23,
+    positionY: 7,
+    width: 20,
+    height: 25,
   );
   bool startMoving = false;
   bool isOnGround = false;
 
   @override
   FutureOr<void> onLoad() {
-    // debugMode = true;
+    debugMode = true;
     _loadAllAnimations();
     current = GroundEnemyState.run;
     add(
-      SideHitbox(
-        position: Vector2(sideHitbox.positionX, sideHitbox.positionY),
-        size: Vector2(sideHitbox.width, sideHitbox.height),
-      ),
-    );
-    add(
-      BottomHitbox(
-        position: Vector2(bottomHitbox.positionX, bottomHitbox.positionY),
-        size: Vector2(bottomHitbox.width, bottomHitbox.height),
-      ),
-    );
-    add(
-      HeadHitbox(
-        position: Vector2(headHitbox.positionX, headHitbox.positionY),
-        size: Vector2(headHitbox.width, headHitbox.height),
-        collisionType: CollisionType.passive,
+      RectangleHitbox(
+        position: Vector2(hitbox.positionX, hitbox.positionY),
+        size: Vector2(hitbox.width, hitbox.height),
       ),
     );
     return super.onLoad();
@@ -76,15 +54,57 @@ class GroundEnemy extends SpriteAnimationGroupComponent
 
   @override
   void update(double dt) {
-    super.update(dt);
+    // isOnGround = false;
     _checkWherePlayer();
-    if (!isOnGround) {
-      _applyGravity(dt);
-    } else if (startMoving) {
+
+    if (!isOnGround) _applyGravity(dt);
+    if (startMoving) {
       _move(dt);
     }
     _deleteIfFall();
-    isOnGround = false;
+    super.update(dt);
+  }
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+    if (other is CollisionBlocks || other is Platform) {
+      final result = calculateNormal(other);
+      if (result.y < 0) {
+        isOnGround = true;
+        velocity.y = 0;
+        position.y = other.position.y - hitbox.height - hitbox.positionY;
+      }
+      // if (result == Vector2(0, -1)) {
+      //   isOnGround = true;
+      //   position.y = other.position.y - hitbox.height - hitbox.positionY;
+      //   velocity.y = 0;
+      // }
+    }
+  }
+
+  @override
+  void onCollisionStart(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
+    super.onCollisionStart(intersectionPoints, other);
+    if (other is CollisionBlocks || other is Platform) {
+      final result = calculateNormal(other);
+      if ((result == Vector2(1, 0) || result == Vector2(-1, 0))) {
+        moveDirection *= -1;
+        flipHorizontallyAroundCenter();
+        position.x += moveDirection > 0 ? -10 : 10;
+      }
+    }
+  }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
+    if (other is CollisionBlocks || other is Platform) {
+      isOnGround = false;
+    }
   }
 
   void _checkWherePlayer() {

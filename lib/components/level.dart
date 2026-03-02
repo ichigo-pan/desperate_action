@@ -23,6 +23,8 @@ class Level extends World {
   static late int tileWidth;
   static late double mapSizeX;
   static int playerLifes = 3;
+  static double fixedDeltaTime = 1 / 60;
+  static double accumulatedTime = 0;
 
   @override
   FutureOr<void> onLoad() async {

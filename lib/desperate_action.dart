@@ -38,6 +38,6 @@ class DesperateAction extends FlameGame
     world.add(CameraFollowSystem(player: player));
     final background = BackgroundImg(player: player);
     background.priority = -3;
-    camera.backdrop.add(background);
+    // camera.backdrop.add(background);
   }
 }

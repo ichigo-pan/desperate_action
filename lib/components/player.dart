@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'dart:math';
+import 'package:desperate_action/components/collision_blocks.dart';
+import 'package:desperate_action/components/platform.dart';
 import 'package:desperate_action/desperate_action.dart';
+import 'package:desperate_action/utils/actor_blocks_collision.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
@@ -20,7 +24,8 @@ class Player extends SpriteAnimationGroupComponent
     with
         HasGameReference<DesperateAction>,
         KeyboardHandler,
-        CollisionCallbacks {
+        CollisionCallbacks,
+        AABBcollision {
   Player({super.position, super.size});
 
   final Vector2 velocity = Vector2.zero();
@@ -34,61 +39,90 @@ class Player extends SpriteAnimationGroupComponent
   bool pressedJump = false;
   bool isOnGround = false;
 
-  // final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
-  //   positionX: 10,
-  //   positionY: 5,
-  //   width: 14,
-  //   height: 27,
-  // );
-
-  final CustomRectangleHitbox headHitbox = CustomRectangleHitbox(
-    positionX: 7,
-    positionY: 5,
-    width: 19,
-    height: 4,
-  );
-  final CustomRectangleHitbox sideHitbox = CustomRectangleHitbox(
-    positionX: 24,
-    positionY: 14,
-    width: 6,
-    height: 11,
-  );
-  final CustomRectangleHitbox bottomHitbox = CustomRectangleHitbox(
+  final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
     positionX: 10,
-    positionY: 30,
-    width: 13,
-    height: 5,
+    positionY: 5,
+    width: 14,
+    height: 27,
   );
 
   @override
   FutureOr<void> onLoad() {
     // debugMode = true;
     _loadAllAnimations();
-    addAll([
-      HeadHitbox(
-        position: Vector2(headHitbox.positionX, headHitbox.positionY),
-        size: Vector2(headHitbox.width, headHitbox.height),
+    add(
+      RectangleHitbox(
+        position: Vector2(hitbox.positionX, hitbox.positionY),
+        size: Vector2(hitbox.width, hitbox.height),
       ),
-      SideHitbox(
-        position: Vector2(sideHitbox.positionX, sideHitbox.positionY),
-        size: Vector2(sideHitbox.width, sideHitbox.height),
-      ),
-      BottomHitbox(
-        position: Vector2(bottomHitbox.positionX, bottomHitbox.positionY),
-        size: Vector2(bottomHitbox.width, bottomHitbox.height),
-      ),
-    ]);
+    );
     return super.onLoad();
   }
 
   @override
   void update(double dt) {
-    super.update(dt);
     _updateMovements(dt);
     if (!isOnGround) _applyGravity(dt);
-    _changeAnimation();
     _changeSpriteScale();
-    isOnGround = false;
+    _changeAnimation();
+
+    super.update(dt);
+  }
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+
+    if (other is CollisionBlocks || other is Platform) {
+      // Получаем хитбокс игрока (должен быть добавлен как RectangleHitbox)
+      final myHitbox = children.whereType<RectangleHitbox>().first;
+      // Получаем хитбокс другого объекта (предполагаем, что он есть)
+      final otherHitbox = other.children
+          .whereType<RectangleHitbox>()
+          .firstOrNull;
+      if (otherHitbox == null) return;
+
+      // Используем метод миксина для определения нормали столкновения
+      final normal = calculateNormal(other);
+      if (normal == Vector2.zero()) return; // нет реального пересечения
+
+      // Вычисляем актуальные перекрытия по осям на основе абсолютных координат
+      final myRect = myHitbox.toAbsoluteRect();
+      final otherRect = otherHitbox.toAbsoluteRect();
+
+      final overlapX =
+          min(myRect.right, otherRect.right) - max(myRect.left, otherRect.left);
+      final overlapY =
+          min(myRect.bottom, otherRect.bottom) - max(myRect.top, otherRect.top);
+
+      // Разделяем объекты по направлению нормали
+      if (normal.x != 0) {
+        // Горизонтальное столкновение – смещаем игрока по X
+        position.x += normal.x * overlapX;
+        velocity.x = 0; // останавливаем горизонтальную скорость
+      }
+      if (normal.y != 0) {
+        // Вертикальное столкновение – смещаем игрока по Y
+        position.y += normal.y * overlapY;
+
+        if (normal.y < 0) {
+          // Столкновение снизу (игрок стоит на блоке)
+          isOnGround = true;
+          velocity.y = 0;
+        } else if (normal.y > 0) {
+          // Столкновение сверху (удар головой о блок)
+          if (velocity.y < 0) velocity.y = 0; // гасим прыжок вверх
+        }
+      }
+    }
+  }
+
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
+    if (other is CollisionBlocks || other is Platform) {
+      isOnGround = false;
+    }
   }
 
   // @override
@@ -184,11 +218,11 @@ class Player extends SpriteAnimationGroupComponent
   void _changeSpriteScale() {
     if (velocity.x < 0 && scale.x > 0) {
       flipHorizontallyAroundCenter();
-      position.x += 5;
+      // position.x += 5;
     }
     if (velocity.x > 0 && scale.x < 0) {
       flipHorizontallyAroundCenter();
-      position.x -= 5;
+      // position.x -= 5;
     }
   }
 
@@ -196,7 +230,7 @@ class Player extends SpriteAnimationGroupComponent
     velocity.y = -jumpForce;
     position.y += velocity.y * dt;
     pressedJump = false;
-    isOnGround = false;
+    // isOnGround = false;
   }
 
   void _applyGravity(double dt) {
