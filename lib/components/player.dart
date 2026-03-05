@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:desperate_action/components/collision_blocks.dart';
-import 'package:desperate_action/components/platform.dart';
-import 'package:desperate_action/desperate_action.dart';
-import 'package:desperate_action/utils/actor_blocks_collision.dart';
-import 'package:desperate_action/utils/custom_hitbox.dart';
-import 'package:flame/collisions.dart';
-import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
+import 'package:flame/components.dart';
+import 'package:flame/collisions.dart';
+import 'package:desperate_action/desperate_action.dart';
+import 'package:desperate_action/utils/custom_hitbox.dart';
+import 'package:desperate_action/components/platform.dart';
+import 'package:desperate_action/utils/mixins/aabb_collision.dart';
+import 'package:desperate_action/components/ground_enemy.dart';
+import 'package:desperate_action/components/jumping_enemy.dart';
+import 'package:desperate_action/components/collision_blocks.dart';
 
 enum PlayerState {
   fall('Fall', 1),
@@ -56,6 +58,7 @@ class Player extends SpriteAnimationGroupComponent
         size: Vector2(hitbox.width, hitbox.height),
       ),
     );
+
     return super.onLoad();
   }
 
@@ -65,7 +68,7 @@ class Player extends SpriteAnimationGroupComponent
     if (!isOnGround) _applyGravity(dt);
     _changeSpriteScale();
     _changeAnimation();
-
+    _checkIfFallFromScreen();
     super.update(dt);
   }
 
@@ -125,34 +128,36 @@ class Player extends SpriteAnimationGroupComponent
     }
   }
 
-  // @override
-  // void onCollisionStart(
-  //   Set<Vector2> intersectionPoints,
-  //   PositionComponent other,
-  // ) {
-  //   super.onCollisionStart(intersectionPoints, other);
-  //   if (other is GroundEnemy) {
-  //     if (velocity.y != 0) {
-  //       other.die();
-  //       velocity.y = -_bounceHeight;
-  //     } else {
-  //       // ignore: avoid_print
-  //       print('bonk!');
-  //       game.score.updateLifeCount();
-  //     }
-  //   }
-  //   if (other is JumpingEnemy) {
-  //     // ignore: avoid_print
-  //     print('Air bonk!');
-  //     game.score.updateLifeCount();
-  //   }
-  //   if (other is Platform) {
-  //     if (other.ignoreBottom && other.velocity.y > 0) {
-  //       print('Die');
-  //       game.score.updateLifeCount();
-  //     }
-  //   }
-  // }
+  @override
+  void onCollisionStart(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
+    super.onCollisionStart(intersectionPoints, other);
+    if (other is GroundEnemy) {
+      final normal = calculateNormal(other);
+      if (normal.y < 0) {
+        other.die();
+        velocity.y = -_bounceHeight;
+      } else {
+        // ignore: avoid_print
+        print('bonk!');
+        _die();
+      }
+    }
+    if (other is JumpingEnemy) {
+      // ignore: avoid_print
+      print('Air bonk!');
+      _die();
+    }
+    if (other is Platform) {
+      if (other.fallOnPlayer && other.velocity.y > 0) {
+        _die();
+      } else if (other.fallWithPlayer) {
+        isOnGround = true;
+      }
+    }
+  }
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
@@ -237,5 +242,13 @@ class Player extends SpriteAnimationGroupComponent
     velocity.y += gravity;
     velocity.y = velocity.y.clamp(-jumpForce, maxVelocity);
     position.y += velocity.y * dt;
+  }
+
+  void _checkIfFallFromScreen() {
+    if (position.y > game.cameraHeight) _die();
+  }
+
+  void _die() {
+    game.playerDied();
   }
 }

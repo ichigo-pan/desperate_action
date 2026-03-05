@@ -15,6 +15,11 @@ class CameraFollowSystem extends Component
   @override
   FutureOr<void> onLoad() {
     screenHalfWidth = game.cameraWidth / 2;
+    // game.camera.viewfinder.position.y = 0;
+    // final playerCenter = player.position.x + player.width / 2;
+    // double targetX = playerCenter - screenHalfWidth;
+    // targetX = targetX.clamp(0.0, Level.mapSizeX - game.cameraWidth);
+    // game.camera.viewfinder.position.x = targetX;
     return super.onLoad();
   }
 

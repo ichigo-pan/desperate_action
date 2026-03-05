@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:desperate_action/desperate_action.dart';
+import 'package:desperate_action/utils/mixins/player_position.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 
@@ -11,10 +12,11 @@ enum JumpingEnemyState {
   const JumpingEnemyState(this.name, this.amount);
 }
 
-class JumpingEnemy extends SpriteAnimationGroupComponent
-    with HasGameReference<DesperateAction>, CollisionCallbacks {
+class JumpingEnemy extends SpriteAnimationComponent
+    with HasGameReference<DesperateAction>, CollisionCallbacks, PlayerPosition {
   int moveDirection;
   late Vector2 startPosition;
+  late final double birdCenter;
 
   JumpingEnemy({
     required super.position,
@@ -22,6 +24,7 @@ class JumpingEnemy extends SpriteAnimationGroupComponent
     required this.moveDirection,
   }) {
     startPosition = position.clone();
+    birdCenter = position.x + width / 2;
   }
 
   final double moveSpeed = 600;
@@ -32,7 +35,8 @@ class JumpingEnemy extends SpriteAnimationGroupComponent
   @override
   FutureOr<void> onLoad() {
     // debugMode = true;
-    _loadAllAnimations();
+    _changeMoveDirection();
+    animation = _loadAnimation(JumpingEnemyState.fly);
     add(
       CircleHitbox(
         position: Vector2(10, 5),
@@ -40,14 +44,13 @@ class JumpingEnemy extends SpriteAnimationGroupComponent
         collisionType: CollisionType.passive,
       ),
     );
-    _changeMoveDirection();
     return super.onLoad();
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    // _checkWherePlayer();
+    _checkWherePlayer();
     if (_isPlayerNear) {
       _move(dt);
       _respawnWhenNotInCamera();
@@ -58,11 +61,6 @@ class JumpingEnemy extends SpriteAnimationGroupComponent
     if (moveDirection > 0) {
       flipVerticallyAroundCenter();
     }
-  }
-
-  void _loadAllAnimations() {
-    animations = {JumpingEnemyState.fly: _loadAnimation(JumpingEnemyState.fly)};
-    current = JumpingEnemyState.fly;
   }
 
   SpriteAnimation _loadAnimation(JumpingEnemyState state) {
@@ -84,19 +82,13 @@ class JumpingEnemy extends SpriteAnimationGroupComponent
     position.y += velocity.y * dt;
   }
 
-  // void _checkWherePlayer() {
-  //   final player = game.player.scale.x > 0
-  //       ? game.player.position.x +
-  //             game.player.hitbox.positionX +
-  //             game.player.hitbox.width
-  //       : game.player.position.x -
-  //             game.player.hitbox.positionX -
-  //             game.player.hitbox.width;
-  //   final birdCenter = position.x + width / 2;
-  //   if ((birdCenter - player).abs() < 20) {
-  //     _isPlayerNear = true;
-  //   }
-  // }
+  void _checkWherePlayer() {
+    final player = returnPlayerPositionX(game.player);
+
+    if ((birdCenter - player).abs() < 20) {
+      _isPlayerNear = true;
+    }
+  }
 
   void _respawnWhenNotInCamera() {
     final cameraLeftX = game.camera.viewfinder.position.x;

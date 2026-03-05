@@ -20,6 +20,7 @@ class DesperateAction extends FlameGame
     // debugMode = true;
     await images.loadAllImages();
     await _loadLevel('level-1');
+    await _loadCamera();
     score.position = Vector2(20, 5);
 
     return super.onLoad();
@@ -27,6 +28,14 @@ class DesperateAction extends FlameGame
 
   Future<void> _loadLevel(String levelName) async {
     world = Level(levelName: levelName, player: player);
+    add(world);
+    world.add(CameraFollowSystem(player: player));
+    final background = BackgroundImg(player: player);
+    background.priority = -3;
+    // camera.backdrop.add(background);
+  }
+
+  Future<void> _loadCamera() async {
     camera = CameraComponent.withFixedResolution(
       width: cameraWidth,
       height: cameraHeight,
@@ -34,10 +43,22 @@ class DesperateAction extends FlameGame
       hudComponents: [score],
     );
     camera.viewfinder.anchor = Anchor.topLeft;
-    addAll([world, camera]);
-    world.add(CameraFollowSystem(player: player));
-    final background = BackgroundImg(player: player);
-    background.priority = -3;
-    // camera.backdrop.add(background);
+    add(camera);
+  }
+
+  void playerDied() {
+    score.updateLifeCount();
+    overlays.add('PlayerDied');
+    pauseEngine();
+    Future.delayed(Duration(seconds: 5), () {
+      _restart();
+      overlays.remove('PlayerDied');
+      resumeEngine();
+    });
+  }
+
+  void _restart() async {
+    world.removeFromParent();
+    await _loadLevel('level-1');
   }
 }

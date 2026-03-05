@@ -1,11 +1,11 @@
 import 'dart:async';
+import 'package:desperate_action/components/checkpoint.dart';
 import 'package:desperate_action/components/collision_blocks.dart';
 import 'package:desperate_action/components/ground_enemy.dart';
 import 'package:desperate_action/components/jumping_enemy.dart';
 import 'package:desperate_action/components/player.dart';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
-
 import 'platform.dart';
 
 // класс world - это специальный класс
@@ -14,20 +14,21 @@ class Level extends World {
   final String levelName;
   late Player player;
   Level({required this.levelName, required this.player});
-
   late TiledComponent level;
   // поскольку эти переменные понадобятся нам в других классах,
   // и нет необходимости в этих других классах
   // создавать новые объекты класса level,
   // делаем эти переменные static
-  static late int tileWidth;
+  late int tileWidth;
   static late double mapSizeX;
   static int playerLifes = 3;
-  static double fixedDeltaTime = 1 / 60;
-  static double accumulatedTime = 0;
+  static int? lastCheckpointId;
+  final Map<int, Vector2> checkpoints = {};
+  // static Vector2? lastCheckpointPosition;
 
   @override
   FutureOr<void> onLoad() async {
+    // debugMode = true;
     // грузим background и получаем размеры карты, которые в дальнейшем используем
     level = await TiledComponent.load('$levelName.tmx', Vector2.all(18));
     tileWidth = level.tileMap.map.tileWidth;
@@ -38,12 +39,12 @@ class Level extends World {
     // или с которыми может сталкиваться.
     // Нужно, чтобы игрок мог ходить, прыгать и падать
     _loadCollisionBlocks();
+    _loadAllCheckpoints();
     // грузим всех персонажей - игрока,
-    // врагов на земле, врагов в воздухе,
+    // врагов на земле,
     // врагов выпрыгивающих
-    _loadCharacters();
-    _loadLuckyBlocks();
     _loadFallingPlatforms();
+    _loadCharacters();
 
     return super.onLoad();
   }
@@ -61,6 +62,36 @@ class Level extends World {
     }
   }
 
+  void _loadAllCheckpoints() {
+    // выбираем нужный нам слой
+    final checkpointsLayer = level.tileMap.getLayer<ObjectGroup>('Checkpoints');
+    if (checkpointsLayer != null) {
+      int id = 0;
+      for (final flag in checkpointsLayer.objects) {
+        final checkpoint = Checkpoint(
+          position: flag.position,
+          size: flag.size,
+          id: id,
+        );
+        if (lastCheckpointId == id) {
+          checkpoint.isCurrentCheckpoint = true;
+        }
+        checkpoints.addAll({id: flag.position});
+        id += 1;
+        checkpoint.priority = -1;
+        add(checkpoint);
+      }
+    }
+  }
+
+  Vector2? getLastCheckpointPlayerPosition() {
+    final position = checkpoints[lastCheckpointId];
+    if (position != null) {
+      return Vector2(position.x, position.y) + Vector2.all(64 / 3);
+    }
+    return null;
+  }
+
   void _loadCharacters() {
     // выбираем другой слой - Characters
     final charactersSpawnPointsLayer = level.tileMap.getLayer<ObjectGroup>(
@@ -74,7 +105,9 @@ class Level extends World {
         switch (character.class_) {
           // добавляем игрока
           case 'Player':
-            player.position = character.position;
+            final currentPosition =
+                getLastCheckpointPlayerPosition() ?? character.position;
+            player.position = currentPosition;
             player.size = character.size;
             player.scale.x = 1;
             add(player);
@@ -117,13 +150,13 @@ class Level extends World {
       for (final object in fallingPlatformsLayer.objects) {
         switch (object.class_) {
           case 'Platform':
-            final ignoreBottom = object.properties.getValue('ignoreBottom');
-            final fallDown = object.properties.getValue('fallDown');
+            final fallOnPlayer = object.properties.getValue('fallOnPlayer');
+            final fallWithPlayer = object.properties.getValue('fallWithPlayer');
             final platform = Platform(
               position: object.position,
               size: object.size,
-              ignoreBottom: ignoreBottom,
-              fallDown: fallDown,
+              fallOnPlayer: fallOnPlayer,
+              fallWithPlayer: fallWithPlayer,
             );
             platform.priority = -2;
             add(platform);
@@ -133,5 +166,9 @@ class Level extends World {
     }
   }
 
-  void _loadLuckyBlocks() {}
+  void resetComplitly() {
+    // for new Level
+    playerLifes = 3;
+    lastCheckpointId = 0;
+  }
 }

@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'package:desperate_action/components/collision_blocks.dart';
-import 'package:desperate_action/components/platform.dart';
-import 'package:desperate_action/desperate_action.dart';
-import 'package:desperate_action/utils/custom_hitbox.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:desperate_action/desperate_action.dart';
+import 'package:desperate_action/components/collision_blocks.dart';
+import 'package:desperate_action/components/platform.dart';
+import 'package:desperate_action/utils/mixins/aabb_collision.dart';
+import 'package:desperate_action/utils/custom_hitbox.dart';
 
 enum GroundEnemyState {
   hit('Hit', 5),
@@ -18,12 +19,17 @@ enum GroundEnemyState {
 class GroundEnemy extends SpriteAnimationGroupComponent
     with HasGameReference<DesperateAction>, CollisionCallbacks, AABBcollision {
   int moveDirection;
+  late Vector2 startingPosition;
+  late int startDirection;
 
   GroundEnemy({
     required super.position,
     required super.size,
     required this.moveDirection,
-  });
+  }) {
+    startingPosition = position.clone();
+    startDirection = moveDirection;
+  }
 
   final double moveSpeed = 30;
   final double gravity = 9.8;
@@ -40,7 +46,7 @@ class GroundEnemy extends SpriteAnimationGroupComponent
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     _loadAllAnimations();
     current = GroundEnemyState.run;
     add(
@@ -75,11 +81,6 @@ class GroundEnemy extends SpriteAnimationGroupComponent
         velocity.y = 0;
         position.y = other.position.y - hitbox.height - hitbox.positionY;
       }
-      // if (result == Vector2(0, -1)) {
-      //   isOnGround = true;
-      //   position.y = other.position.y - hitbox.height - hitbox.positionY;
-      //   velocity.y = 0;
-      // }
     }
   }
 

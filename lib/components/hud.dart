@@ -14,7 +14,7 @@ class Hud extends PositionComponent with HasGameReference<DesperateAction> {
 
     textRenderer: TextPaint(
       style: TextStyle(
-        fontSize: 36,
+        fontSize: 32,
         color: Colors.pink[200],
         fontWeight: FontWeight.bold,
         height: 1.0,
