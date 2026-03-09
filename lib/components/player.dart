@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:desperate_action/components/finish.dart';
 import 'package:flutter/services.dart';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
@@ -37,9 +38,13 @@ class Player extends SpriteAnimationGroupComponent
   final double maxVelocity = 200;
   final double _bounceHeight = 150;
 
+  double? targetFinishPosition;
+
   int xMovement = 0;
   bool pressedJump = false;
   bool isOnGround = false;
+  bool _controlsEnabled = true;
+  bool _isUserMove = true;
 
   final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
     positionX: 10,
@@ -58,13 +63,30 @@ class Player extends SpriteAnimationGroupComponent
         size: Vector2(hitbox.width, hitbox.height),
       ),
     );
+    _controlsEnabled = false;
+    _isUserMove = true;
+    velocity.setZero();
+    // Добавляем таймер, который включит управление через 1 секунду
+    add(
+      TimerComponent(
+        period: 1.0,
+        repeat: false,
+        onTick: () {
+          _controlsEnabled = true;
+        },
+      ),
+    );
 
     return super.onLoad();
   }
 
   @override
   void update(double dt) {
-    _updateMovements(dt);
+    if (_isUserMove) {
+      _updateMovements(dt);
+    } else {
+      _moveRight(dt);
+    }
     if (!isOnGround) _applyGravity(dt);
     _changeSpriteScale();
     _changeAnimation();
@@ -140,14 +162,9 @@ class Player extends SpriteAnimationGroupComponent
         other.die();
         velocity.y = -_bounceHeight;
       } else {
-        // ignore: avoid_print
-        print('bonk!');
         _die();
       }
-    }
-    if (other is JumpingEnemy) {
-      // ignore: avoid_print
-      print('Air bonk!');
+    } else if (other is JumpingEnemy) {
       _die();
     }
     if (other is Platform) {
@@ -157,10 +174,15 @@ class Player extends SpriteAnimationGroupComponent
         isOnGround = true;
       }
     }
+    if (other is Finish) {
+      _isUserMove = false;
+      targetFinishPosition = other.x + 100;
+    }
   }
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    if (!_controlsEnabled) return false;
     // horizontal movemets
     xMovement = 0;
     final isKeyLeft =
@@ -202,6 +224,18 @@ class Player extends SpriteAnimationGroupComponent
     if (pressedJump && isOnGround) _jump(dt);
     velocity.x = xMovement * moveSpeed;
     position.x += velocity.x * dt;
+  }
+
+  void _moveRight(double dt) {
+    // Двигаемся вправо с постоянной скоростью
+    velocity.x = moveSpeed;
+    position.x += velocity.x * dt;
+
+    // Если достигли или превысили цель, останавливаем автоматическое движение
+    if (position.x >= targetFinishPosition!) {
+      velocity.x = 0;
+      _isUserMove = true;
+    }
   }
 
   void _changeAnimation() {

@@ -9,10 +9,13 @@ class Platform extends SpriteComponent
     with HasGameReference<DesperateAction>, PlayerPosition {
   final bool fallOnPlayer;
   final bool fallWithPlayer;
+  final String spriteName;
   late final double platformCenter;
   Platform({
     required super.position,
     required super.size,
+    required super.priority,
+    required this.spriteName,
     required this.fallOnPlayer,
     required this.fallWithPlayer,
   }) {
@@ -20,13 +23,13 @@ class Platform extends SpriteComponent
   }
 
   bool doFall = false;
-  final double moveSpeed = 250;
+  final double moveSpeed = 300;
   final Vector2 velocity = Vector2.zero();
 
   @override
   FutureOr<void> onLoad() {
     // debugMode = true;
-    sprite = Sprite(game.images.fromCache('FallingPlatform/Platform3.png'));
+    sprite = Sprite(game.images.fromCache('FallingPlatform/$spriteName.png'));
     add(RectangleHitbox(collisionType: CollisionType.passive));
     return super.onLoad();
   }

@@ -85,7 +85,7 @@ class JumpingEnemy extends SpriteAnimationComponent
   void _checkWherePlayer() {
     final player = returnPlayerPositionX(game.player);
 
-    if ((birdCenter - player).abs() < 20) {
+    if ((birdCenter - player).abs() < width / 2) {
       _isPlayerNear = true;
     }
   }

@@ -16,7 +16,7 @@ mixin AABBcollision on PositionComponent {
     final overlapX = min(a.right, b.right) - max(a.left, b.left);
     final overlapY = min(a.bottom, b.bottom) - max(a.top, b.top);
 
-    if (overlapX <= 0 || overlapY <= 0) {
+    if (overlapX <= 0.1 || overlapY <= 0.1) {
       return Vector2.zero(); // нет пересечения
     }
 

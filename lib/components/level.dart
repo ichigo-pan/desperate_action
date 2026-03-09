@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:desperate_action/components/checkpoint.dart';
 import 'package:desperate_action/components/collision_blocks.dart';
+import 'package:desperate_action/components/finish.dart';
 import 'package:desperate_action/components/ground_enemy.dart';
 import 'package:desperate_action/components/jumping_enemy.dart';
 import 'package:desperate_action/components/player.dart';
@@ -68,18 +69,27 @@ class Level extends World {
     if (checkpointsLayer != null) {
       int id = 0;
       for (final flag in checkpointsLayer.objects) {
-        final checkpoint = Checkpoint(
-          position: flag.position,
-          size: flag.size,
-          id: id,
-        );
-        if (lastCheckpointId == id) {
-          checkpoint.isCurrentCheckpoint = true;
+        switch (flag.class_) {
+          case 'Checkpoint':
+            final checkpoint = Checkpoint(
+              position: flag.position,
+              size: flag.size,
+              id: id,
+            );
+            if (lastCheckpointId == id) {
+              checkpoint.isCurrentCheckpoint = true;
+            }
+            checkpoints.addAll({id: flag.position});
+            id += 1;
+            checkpoint.priority = -1;
+            add(checkpoint);
+            break;
+
+          case 'Finish':
+            final finish = Finish(position: flag.position, size: flag.size);
+            add(finish);
+            break;
         }
-        checkpoints.addAll({id: flag.position});
-        id += 1;
-        checkpoint.priority = -1;
-        add(checkpoint);
       }
     }
   }
@@ -155,10 +165,11 @@ class Level extends World {
             final platform = Platform(
               position: object.position,
               size: object.size,
+              spriteName: 'Platform3',
+              priority: 1,
               fallOnPlayer: fallOnPlayer,
               fallWithPlayer: fallWithPlayer,
             );
-            platform.priority = -2;
             add(platform);
             break;
         }

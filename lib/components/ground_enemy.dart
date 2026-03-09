@@ -80,19 +80,7 @@ class GroundEnemy extends SpriteAnimationGroupComponent
         isOnGround = true;
         velocity.y = 0;
         position.y = other.position.y - hitbox.height - hitbox.positionY;
-      }
-    }
-  }
-
-  @override
-  void onCollisionStart(
-    Set<Vector2> intersectionPoints,
-    PositionComponent other,
-  ) {
-    super.onCollisionStart(intersectionPoints, other);
-    if (other is CollisionBlocks || other is Platform) {
-      final result = calculateNormal(other);
-      if ((result == Vector2(1, 0) || result == Vector2(-1, 0))) {
+      } else if ((result == Vector2(1, 0) || result == Vector2(-1, 0))) {
         moveDirection *= -1;
         flipHorizontallyAroundCenter();
         position.x += moveDirection > 0 ? -10 : 10;

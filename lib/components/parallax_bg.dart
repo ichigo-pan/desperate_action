@@ -27,6 +27,14 @@ class BackgroundImg extends ParallaxComponent {
     );
     position = Vector2(0, -60);
 
+    // final snow = SpriteComponent(
+    //   sprite: await game.loadSprite('Background/1 - Snowy_foreground_area.png'),
+    //   position: Vector2(0, -160),
+    //   size: Vector2(800, game.size.y),
+    //   scale: Vector2(1, 1.2),
+    // );
+    // add(snow);
+
     return super.onLoad();
   }
 
@@ -42,7 +50,7 @@ class BackgroundImg extends ParallaxComponent {
     }
 
     // плавное приближение к targetVelocity
-    const double smoothing = 0.1; // коэффициент сглаживания
+    const double smoothing = 0.3; // коэффициент сглаживания
     baseVelocity.x += (targetVelocity - baseVelocity.x) * smoothing;
   }
 }
