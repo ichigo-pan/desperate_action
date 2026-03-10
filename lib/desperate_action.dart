@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:desperate_action/utils/hud.dart';
+import 'package:desperate_action/components/hud.dart';
 import 'package:desperate_action/components/level.dart';
 import 'package:desperate_action/components/player.dart';
 import 'package:desperate_action/utils/camera_follows_player.dart';
@@ -67,9 +67,12 @@ class DesperateAction extends FlameGame
     player.removeFromParent();
     world.removeFromParent();
     await _loadLevel('level-1');
+    await player.loaded;
     if (Level.lastCheckpointId == null) {
       camera.removeFromParent();
       await _loadCamera();
+    } else {
+      camera.viewfinder.position = Vector2(player.position.x - 30, 0);
     }
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:desperate_action/components/finish.dart';
+import 'package:desperate_action/components/invisible_blocks.dart';
 import 'package:flutter/services.dart';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
@@ -98,54 +98,30 @@ class Player extends SpriteAnimationGroupComponent
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
 
-    if (other is CollisionBlocks || other is Platform) {
-      // Получаем хитбокс игрока (должен быть добавлен как RectangleHitbox)
-      final myHitbox = children.whereType<RectangleHitbox>().first;
-      // Получаем хитбокс другого объекта (предполагаем, что он есть)
-      final otherHitbox = other.children
-          .whereType<RectangleHitbox>()
-          .firstOrNull;
-      if (otherHitbox == null) return;
+    if (other is CollisionBlocks ||
+        other is Platform ||
+        (other is InvisibleBlocks && other.isVisible)) {
+      final (normal, offset) = resolveCollision(other);
 
-      // Используем метод миксина для определения нормали столкновения
-      final normal = calculateNormal(other);
-      if (normal == Vector2.zero()) return; // нет реального пересечения
-
-      // Вычисляем актуальные перекрытия по осям на основе абсолютных координат
-      final myRect = myHitbox.toAbsoluteRect();
-      final otherRect = otherHitbox.toAbsoluteRect();
-
-      final overlapX =
-          min(myRect.right, otherRect.right) - max(myRect.left, otherRect.left);
-      final overlapY =
-          min(myRect.bottom, otherRect.bottom) - max(myRect.top, otherRect.top);
-
-      // Разделяем объекты по направлению нормали
-      if (normal.x != 0) {
-        // Горизонтальное столкновение – смещаем игрока по X
-        position.x += normal.x * overlapX;
-        velocity.x = 0; // останавливаем горизонтальную скорость
+      // Дополнительная логика, зависящая от направления
+      if (normal.y < 0) {
+        // Столкновение снизу – стоим на земле
+        isOnGround = true;
+        velocity.y = 0;
+      } else if (normal.y > 0) {
+        // Удар головой
+        if (velocity.y < 0) velocity.y = 0;
       }
-      if (normal.y != 0) {
-        // Вертикальное столкновение – смещаем игрока по Y
-        position.y += normal.y * overlapY;
-
-        if (normal.y < 0) {
-          // Столкновение снизу (игрок стоит на блоке)
-          isOnGround = true;
-          velocity.y = 0;
-        } else if (normal.y > 0) {
-          // Столкновение сверху (удар головой о блок)
-          if (velocity.y < 0) velocity.y = 0; // гасим прыжок вверх
-        }
-      }
+      if (normal.x != 0) velocity.x = 0;
     }
   }
 
   @override
   void onCollisionEnd(PositionComponent other) {
     super.onCollisionEnd(other);
-    if (other is CollisionBlocks || other is Platform) {
+    if (other is CollisionBlocks ||
+        other is Platform ||
+        other is InvisibleBlocks) {
       isOnGround = false;
     }
   }
@@ -157,7 +133,7 @@ class Player extends SpriteAnimationGroupComponent
   ) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is GroundEnemy) {
-      final normal = calculateNormal(other);
+      final (normal, offset) = resolveCollision(other);
       if (normal.y < 0) {
         other.die();
         velocity.y = -_bounceHeight;

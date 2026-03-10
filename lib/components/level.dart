@@ -3,8 +3,10 @@ import 'package:desperate_action/components/checkpoint.dart';
 import 'package:desperate_action/components/collision_blocks.dart';
 import 'package:desperate_action/components/finish.dart';
 import 'package:desperate_action/components/ground_enemy.dart';
+import 'package:desperate_action/components/invisible_blocks.dart';
 import 'package:desperate_action/components/jumping_enemy.dart';
 import 'package:desperate_action/components/player.dart';
+import 'package:desperate_action/components/trigger.dart';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'platform.dart';
@@ -24,6 +26,7 @@ class Level extends World {
   static late double mapSizeX;
   static int playerLifes = 3;
   static int? lastCheckpointId;
+  static late Vector2 currentPlayerSpawnPosition;
   final Map<int, Vector2> checkpoints = {};
   // static Vector2? lastCheckpointPosition;
 
@@ -46,7 +49,7 @@ class Level extends World {
     // врагов выпрыгивающих
     _loadFallingPlatforms();
     _loadCharacters();
-
+    _loadTriggers();
     return super.onLoad();
   }
 
@@ -55,10 +58,22 @@ class Level extends World {
     final collisionsLayer = level.tileMap.getLayer<ObjectGroup>('Collisions');
     if (collisionsLayer != null) {
       for (final collision in collisionsLayer.objects) {
-        final block = CollisionBlocks()
-          ..position = collision.position
-          ..size = collision.size;
-        add(block);
+        switch (collision.class_) {
+          case 'InvisibleBlock':
+            final block = InvisibleBlocks(
+              position: collision.position,
+              size: collision.size,
+              spriteName: 'invisibleBlock',
+            );
+            add(block);
+            break;
+          default:
+            final block = CollisionBlocks()
+              ..position = collision.position
+              ..size = collision.size;
+            add(block);
+            break;
+        }
       }
     }
   }
@@ -115,9 +130,9 @@ class Level extends World {
         switch (character.class_) {
           // добавляем игрока
           case 'Player':
-            final currentPosition =
+            currentPlayerSpawnPosition =
                 getLastCheckpointPlayerPosition() ?? character.position;
-            player.position = currentPosition;
+            player.position = currentPlayerSpawnPosition;
             player.size = character.size;
             player.scale.x = 1;
             add(player);
@@ -142,6 +157,7 @@ class Level extends World {
               position: character.position,
               size: character.size,
               moveDirection: moveDirection,
+              id: character.id,
             );
             jumpingEnemy.priority = -2;
             add(jumpingEnemy);
@@ -165,12 +181,32 @@ class Level extends World {
             final platform = Platform(
               position: object.position,
               size: object.size,
+              id: object.id,
               spriteName: 'Platform3',
               priority: 1,
               fallOnPlayer: fallOnPlayer,
               fallWithPlayer: fallWithPlayer,
             );
             add(platform);
+            break;
+        }
+      }
+    }
+  }
+
+  void _loadTriggers() {
+    final triggersLayer = level.tileMap.getLayer<ObjectGroup>('Triggers');
+    if (triggersLayer != null) {
+      for (final object in triggersLayer.objects) {
+        switch (object.class_) {
+          case 'Trigger':
+            final objectId = object.properties.getValue('objectId');
+            final trigger = Trigger(
+              position: object.position,
+              size: object.size,
+              objectId: objectId,
+            );
+            add(trigger);
             break;
         }
       }

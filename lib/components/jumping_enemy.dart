@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:desperate_action/desperate_action.dart';
-import 'package:desperate_action/utils/mixins/player_position.dart';
+import 'package:desperate_action/utils/fallable.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 
@@ -13,14 +13,19 @@ enum JumpingEnemyState {
 }
 
 class JumpingEnemy extends SpriteAnimationComponent
-    with HasGameReference<DesperateAction>, CollisionCallbacks, PlayerPosition {
+    with HasGameReference<DesperateAction>, CollisionCallbacks
+    implements Fallable {
   int moveDirection;
+  @override
+  final int id;
+
   late Vector2 startPosition;
   late final double birdCenter;
 
   JumpingEnemy({
     required super.position,
     required super.size,
+    required this.id,
     required this.moveDirection,
   }) {
     startPosition = position.clone();
@@ -30,7 +35,8 @@ class JumpingEnemy extends SpriteAnimationComponent
   final double moveSpeed = 600;
   final Vector2 velocity = Vector2.zero();
   final double hitboxRadius = 10;
-  bool _isPlayerNear = false;
+  @override
+  bool doFall = false;
 
   @override
   FutureOr<void> onLoad() {
@@ -50,8 +56,7 @@ class JumpingEnemy extends SpriteAnimationComponent
   @override
   void update(double dt) {
     super.update(dt);
-    _checkWherePlayer();
-    if (_isPlayerNear) {
+    if (doFall) {
       _move(dt);
       _respawnWhenNotInCamera();
     }
@@ -82,19 +87,11 @@ class JumpingEnemy extends SpriteAnimationComponent
     position.y += velocity.y * dt;
   }
 
-  void _checkWherePlayer() {
-    final player = returnPlayerPositionX(game.player);
-
-    if ((birdCenter - player).abs() < width / 2) {
-      _isPlayerNear = true;
-    }
-  }
-
   void _respawnWhenNotInCamera() {
     final cameraLeftX = game.camera.viewfinder.position.x;
     final cameraRightX = cameraLeftX + game.cameraWidth;
     if (cameraLeftX > position.x + width || cameraRightX < position.x) {
-      _isPlayerNear = false;
+      doFall = false;
       position = startPosition;
     }
   }

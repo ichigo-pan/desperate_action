@@ -25,6 +25,7 @@ flutter:
     - assets/tiles/
     - assets/images/Terrain/
     - assets/images/Background/
+    - assets/images/InvisibleBlocks/
     - assets/images/Player/
     - assets/images/Enemies/onGround/
     - assets/images/Enemies/jumpingFromEdges/

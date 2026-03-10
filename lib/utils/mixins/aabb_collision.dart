@@ -1,42 +1,57 @@
 import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flutter/services.dart';
 
 mixin AABBcollision on PositionComponent {
-  Vector2 calculateNormal(PositionComponent other) {
-    // Берём свой хитбокс
-    final myHitbox = children.whereType<RectangleHitbox>().first;
+  // 1. Прямоугольник собственного хитбокса
+  Rect get myHitboxRect {
+    return children.whereType<RectangleHitbox>().first.toAbsoluteRect();
+  }
 
-    // Берём хитбокс другого объекта
-    final otherHitbox = other.children.whereType<RectangleHitbox>().first;
+  // 2. Прямоугольник хитбокса другого объекта
+  Rect otherHitboxRect(PositionComponent other) {
+    return other.children.whereType<RectangleHitbox>().first.toAbsoluteRect();
+  }
 
-    final a = myHitbox.toAbsoluteRect();
-    final b = otherHitbox.toAbsoluteRect();
-
+  // 3. Вычисление перекрытий
+  (double x, double y) computeOverlap(Rect a, Rect b) {
     final overlapX = min(a.right, b.right) - max(a.left, b.left);
     final overlapY = min(a.bottom, b.bottom) - max(a.top, b.top);
+    return (overlapX, overlapY);
+  }
 
-    if (overlapX <= 0.1 || overlapY <= 0.1) {
-      return Vector2.zero(); // нет пересечения
-    }
-
-    final centerA = a.center;
-    final centerB = b.center;
+  // 4. Вычисление нормали по прямоугольникам и перекрытиям
+  Vector2 computeNormal(Rect a, Rect b, double overlapX, double overlapY) {
+    if (overlapX <= 0.1 || overlapY <= 0.1) return Vector2.zero();
 
     if (overlapY < overlapX) {
       // Вертикальное столкновение
-      if (centerA.dy < centerB.dy) {
-        return Vector2(0, -1); // стоим на земле
-      } else {
-        return Vector2(0, 1); // удар головой
-      }
+      return a.center.dy < b.center.dy
+          ? Vector2(0, -1) // игрок снизу
+          : Vector2(0, 1); // игрок сверху
     } else {
       // Горизонтальное столкновение
-      if (centerA.dx < centerB.dx) {
-        return Vector2(-1, 0);
-      } else {
-        return Vector2(1, 0);
-      }
+      return a.center.dx < b.center.dx ? Vector2(-1, 0) : Vector2(1, 0);
     }
+  }
+
+  // 5. Вычисление смещения для разрешения коллизии
+  Vector2 separationOffset(Vector2 normal, double overlapX, double overlapY) {
+    return Vector2(normal.x * overlapX, normal.y * overlapY);
+  }
+
+  // 6. (Опционально) Полный метод разрешения коллизии
+  /// Возвращает нормаль столкновения и смещение, которое уже применено к позиции.
+  (Vector2 normal, Vector2 offset) resolveCollision(PositionComponent other) {
+    final a = myHitboxRect;
+    final b = otherHitboxRect(other);
+    final (overlapX, overlapY) = computeOverlap(a, b);
+    final normal = computeNormal(a, b, overlapX, overlapY);
+    if (normal == Vector2.zero()) return (Vector2.zero(), Vector2.zero());
+
+    final offset = separationOffset(normal, overlapX, overlapY);
+    position += offset;
+    return (normal, offset);
   }
 }
