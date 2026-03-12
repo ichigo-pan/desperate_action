@@ -1,17 +1,25 @@
 import 'dart:async';
-import 'package:desperate_action/components/hud.dart';
+import 'package:desperate_action/components/bgAndHUD/hud.dart';
 import 'package:desperate_action/components/level.dart';
-import 'package:desperate_action/components/player.dart';
+import 'package:desperate_action/components/characters/player.dart';
 import 'package:desperate_action/utils/camera_follows_player.dart';
-import 'package:desperate_action/components/parallax_bg.dart';
+import 'package:desperate_action/components/bgAndHUD/parallax_bg.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 
+enum Overlays { playerDied, gameOver }
+
 class DesperateAction extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
+  int playerLifes = 3;
+  int? lastCheckpointId;
+  bool gameStarted = false;
+  static final Map<int, Vector2> checkpoints = {};
+
   late Player player;
   final score = Hud();
+
   final double cameraWidth = 800;
   final double cameraHeight = 450;
 
@@ -23,8 +31,14 @@ class DesperateAction extends FlameGame
     await _loadCamera();
 
     score.position = Vector2(20, 5);
+    overlays.add('StartGame');
 
     return super.onLoad();
+  }
+
+  void _openOverlay(String name) {
+    overlays.add(name);
+    pauseEngine();
   }
 
   void addParallaxBackground() {
@@ -35,7 +49,11 @@ class DesperateAction extends FlameGame
 
   Future<void> _loadLevel(String levelName) async {
     player = Player();
-    world = Level(levelName: levelName, player: player);
+    world = Level(
+      levelName: levelName,
+      player: player,
+      lastCheckpointId: lastCheckpointId,
+    );
     add(world);
     world.add(CameraFollowSystem(player: player));
   }
@@ -52,23 +70,45 @@ class DesperateAction extends FlameGame
     addParallaxBackground();
   }
 
+  void _updateScore() {
+    playerLifes -= 1;
+  }
+
   void playerDied() {
-    score.updateLifeCount();
-    overlays.add('PlayerDied');
-    pauseEngine();
-    Future.delayed(Duration(seconds: 5), () {
-      _restart();
-      overlays.remove('PlayerDied');
+    _updateScore();
+    score.updateLifeCount(playerLifes);
+    _openOverlay('PlayerDied');
+    Future.delayed(Duration(seconds: 4), () {
+      restartGameEngine(false, 'PlayerDied');
+    });
+  }
+
+  void exitLevel() {
+    _openOverlay('GameOver');
+  }
+
+  void resetComplitly() {
+    // for brand new Level
+    playerLifes = 3;
+    lastCheckpointId = null;
+  }
+
+  void restartGameEngine(bool completeRestart, String overlay) {
+    Future.delayed(Duration(milliseconds: 40), () {
+      _restartGameSycle(completeRestart);
+      overlays.remove(overlay);
       resumeEngine();
     });
   }
 
-  void _restart() async {
+  void _restartGameSycle(bool completeRestart) async {
     player.removeFromParent();
     world.removeFromParent();
+    checkpoints.clear();
+    if (completeRestart) resetComplitly();
     await _loadLevel('level-1');
     await player.loaded;
-    if (Level.lastCheckpointId == null) {
+    if (lastCheckpointId == null) {
       camera.removeFromParent();
       await _loadCamera();
     } else {

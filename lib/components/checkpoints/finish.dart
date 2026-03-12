@@ -1,33 +1,29 @@
 import 'dart:async';
-
-import 'package:desperate_action/components/level.dart';
-import 'package:desperate_action/components/player.dart';
+import 'package:desperate_action/components/characters/player.dart';
 import 'package:desperate_action/desperate_action.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 
-enum CheckpointState {
-  noFlag('No Flag', 1),
-  flagOut('Flag Out', 26),
-  idle('Flag Idle', 10);
+enum FinishState {
+  pressed('Pressed', 8),
+  idle('Idle', 1);
 
   final String name;
   final int amount;
-  const CheckpointState(this.name, this.amount);
+  const FinishState(this.name, this.amount);
 }
 
-class Checkpoint extends SpriteAnimationComponent
+class Finish extends SpriteAnimationComponent
     with HasGameReference<DesperateAction>, CollisionCallbacks {
-  final int id;
-  Checkpoint({required super.position, required super.size, required this.id});
-  bool isCurrentCheckpoint = false;
+  Finish({required super.position, required super.size});
+  bool _checkedOnFinish = false;
 
   final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
     positionX: 19,
-    positionY: 19,
-    width: 9,
-    height: 45,
+    positionY: 20,
+    width: 26,
+    height: 44,
   );
 
   @override
@@ -40,17 +36,15 @@ class Checkpoint extends SpriteAnimationComponent
         collisionType: CollisionType.passive,
       ),
     );
-    if (isCurrentCheckpoint) {
-      animation = _loadAnimation(CheckpointState.idle);
-    } else {
-      animation = _loadAnimation(CheckpointState.noFlag);
-    }
+
+    animation = _loadAnimation(FinishState.idle);
+
     return super.onLoad();
   }
 
-  SpriteAnimation _loadAnimation(CheckpointState state, {bool loop = true}) {
+  SpriteAnimation _loadAnimation(FinishState state, {bool loop = true}) {
     return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Checkpoints/Checkpoint/${state.name}.png'),
+      game.images.fromCache('Checkpoints/Finish/${state.name}.png'),
       SpriteAnimationData.sequenced(
         amount: state.amount,
         stepTime: 0.05,
@@ -60,11 +54,11 @@ class Checkpoint extends SpriteAnimationComponent
     );
   }
 
-  void _raiseCheckpoint() async {
-    animation = _loadAnimation(CheckpointState.flagOut, loop: false);
+  void _finishPressed() async {
+    animation = _loadAnimation(FinishState.pressed, loop: false);
     await animationTicker?.completed;
     animationTicker?.reset();
-    animation = _loadAnimation(CheckpointState.idle);
+    animation = _loadAnimation(FinishState.idle);
   }
 
   @override
@@ -74,10 +68,9 @@ class Checkpoint extends SpriteAnimationComponent
   ) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is Player) {
-      if (!isCurrentCheckpoint) {
-        isCurrentCheckpoint = true;
-        _raiseCheckpoint();
-        Level.lastCheckpointId = id;
+      if (!_checkedOnFinish) {
+        _checkedOnFinish = true;
+        _finishPressed();
       }
     }
   }

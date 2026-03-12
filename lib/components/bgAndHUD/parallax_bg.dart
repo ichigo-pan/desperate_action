@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:desperate_action/components/player.dart';
+import 'package:desperate_action/components/characters/player.dart';
 import 'package:desperate_action/utils/camera_follows_player.dart';
 import 'package:flame/components.dart';
 import 'package:flame/parallax.dart';

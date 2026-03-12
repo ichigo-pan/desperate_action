@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:desperate_action/desperate_action.dart';
-import 'package:desperate_action/components/collision_blocks.dart';
-import 'package:desperate_action/components/platform.dart';
+import 'package:desperate_action/components/platformsAndBlocks/collision_blocks.dart';
+import 'package:desperate_action/components/platformsAndBlocks/platform.dart';
 import 'package:desperate_action/utils/mixins/aabb_collision.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
 
@@ -60,14 +60,15 @@ class GroundEnemy extends SpriteAnimationGroupComponent
 
   @override
   void update(double dt) {
-    // isOnGround = false;
-    _checkWherePlayer();
+    if (game.gameStarted) {
+      _checkWherePlayer();
 
-    if (!isOnGround) _applyGravity(dt);
-    if (startMoving) {
-      _move(dt);
+      if (!isOnGround) _applyGravity(dt);
+      if (startMoving) {
+        _move(dt);
+      }
+      _deleteIfFall();
     }
-    _deleteIfFall();
     super.update(dt);
   }
 

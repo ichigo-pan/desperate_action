@@ -1,16 +1,17 @@
 import 'dart:async';
-import 'package:desperate_action/components/finish.dart';
-import 'package:desperate_action/components/invisible_blocks.dart';
+import 'package:desperate_action/components/checkpoints/exit.dart';
+import 'package:desperate_action/components/checkpoints/finish.dart';
+import 'package:desperate_action/components/platformsAndBlocks/invisible_blocks.dart';
 import 'package:flutter/services.dart';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import 'package:desperate_action/desperate_action.dart';
 import 'package:desperate_action/utils/custom_hitbox.dart';
-import 'package:desperate_action/components/platform.dart';
+import 'package:desperate_action/components/platformsAndBlocks/platform.dart';
 import 'package:desperate_action/utils/mixins/aabb_collision.dart';
-import 'package:desperate_action/components/ground_enemy.dart';
-import 'package:desperate_action/components/jumping_enemy.dart';
-import 'package:desperate_action/components/collision_blocks.dart';
+import 'package:desperate_action/components/characters/ground_enemy.dart';
+import 'package:desperate_action/components/characters/jumping_enemy.dart';
+import 'package:desperate_action/components/platformsAndBlocks/collision_blocks.dart';
 
 enum PlayerState {
   fall('Fall', 1),
@@ -45,6 +46,7 @@ class Player extends SpriteAnimationGroupComponent
   bool isOnGround = false;
   bool _controlsEnabled = true;
   bool _isUserMove = true;
+  bool doExitFromLevel = false;
 
   final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
     positionX: 10,
@@ -82,10 +84,12 @@ class Player extends SpriteAnimationGroupComponent
 
   @override
   void update(double dt) {
-    if (_isUserMove) {
-      _updateMovements(dt);
-    } else {
-      _moveRight(dt);
+    if (game.gameStarted) {
+      if (_isUserMove) {
+        _updateMovements(dt);
+      } else {
+        _moveRight(dt);
+      }
     }
     if (!isOnGround) _applyGravity(dt);
     _changeSpriteScale();
@@ -124,6 +128,9 @@ class Player extends SpriteAnimationGroupComponent
         other is InvisibleBlocks) {
       isOnGround = false;
     }
+    if (other is Exit) {
+      Exit.isOnExit = false;
+    }
   }
 
   @override
@@ -140,7 +147,8 @@ class Player extends SpriteAnimationGroupComponent
       } else {
         _die();
       }
-    } else if (other is JumpingEnemy) {
+    }
+    if (other is JumpingEnemy) {
       _die();
     }
     if (other is Platform) {
@@ -153,6 +161,10 @@ class Player extends SpriteAnimationGroupComponent
     if (other is Finish) {
       _isUserMove = false;
       targetFinishPosition = other.x + 100;
+    }
+    if (other is Exit) {
+      Exit.isOnExit = true;
+      print(Exit.isOnExit);
     }
   }
 
@@ -176,6 +188,11 @@ class Player extends SpriteAnimationGroupComponent
         keysPressed.contains(LogicalKeyboardKey.arrowUp) ||
         keysPressed.contains(LogicalKeyboardKey.keyW);
 
+    doExitFromLevel =
+        keysPressed.contains(LogicalKeyboardKey.keyS) ||
+        keysPressed.contains(LogicalKeyboardKey.arrowDown);
+
+    if (doExitFromLevel && Exit.isOnExit) _exitFromLevel();
     return super.onKeyEvent(event, keysPressed);
   }
 
@@ -260,5 +277,9 @@ class Player extends SpriteAnimationGroupComponent
 
   void _die() {
     game.playerDied();
+  }
+
+  void _exitFromLevel() {
+    game.exitLevel();
   }
 }

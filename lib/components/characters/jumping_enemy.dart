@@ -55,11 +55,13 @@ class JumpingEnemy extends SpriteAnimationComponent
 
   @override
   void update(double dt) {
-    super.update(dt);
-    if (doFall) {
-      _move(dt);
-      _respawnWhenNotInCamera();
+    if (game.gameStarted) {
+      if (doFall) {
+        _move(dt);
+        _respawnWhenNotInCamera();
+      }
     }
+    super.update(dt);
   }
 
   void _changeMoveDirection() {

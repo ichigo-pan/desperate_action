@@ -1,8 +1,9 @@
-import 'package:desperate_action/components/level.dart';
+import 'package:desperate_action/desperate_action.dart';
 import 'package:flutter/material.dart';
 
 class PlayerDiedOverlay extends StatefulWidget {
-  const PlayerDiedOverlay({super.key});
+  final DesperateAction game;
+  const PlayerDiedOverlay({super.key, required this.game});
   @override
   State<PlayerDiedOverlay> createState() => _PlayerDiedOverlayState();
 }
@@ -22,7 +23,7 @@ class _PlayerDiedOverlayState extends State<PlayerDiedOverlay> {
                 Image.asset('assets/images/Player/head.png', scale: 0.4),
                 SizedBox(width: 20),
                 Text(
-                  '${Level.playerLifes}',
+                  '${widget.game.playerLifes}',
                   style: TextStyle(
                     fontSize: 68,
                     color: Colors.white,

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:desperate_action/components/player.dart';
+import 'package:desperate_action/components/characters/player.dart';
 import 'package:desperate_action/desperate_action.dart';
 import 'package:desperate_action/utils/fallable.dart';
 import 'package:flame/collisions.dart';
@@ -16,7 +16,7 @@ class Trigger extends PositionComponent
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     add(RectangleHitbox(collisionType: CollisionType.passive));
     return super.onLoad();
   }

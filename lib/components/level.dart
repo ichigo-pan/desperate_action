@@ -1,22 +1,29 @@
 import 'dart:async';
-import 'package:desperate_action/components/checkpoint.dart';
-import 'package:desperate_action/components/collision_blocks.dart';
-import 'package:desperate_action/components/finish.dart';
-import 'package:desperate_action/components/ground_enemy.dart';
-import 'package:desperate_action/components/invisible_blocks.dart';
-import 'package:desperate_action/components/jumping_enemy.dart';
-import 'package:desperate_action/components/player.dart';
+import 'package:desperate_action/components/checkpoints/checkpoint.dart';
+import 'package:desperate_action/components/checkpoints/exit.dart';
+import 'package:desperate_action/components/platformsAndBlocks/collision_blocks.dart';
+import 'package:desperate_action/components/checkpoints/finish.dart';
+import 'package:desperate_action/components/characters/ground_enemy.dart';
+import 'package:desperate_action/components/platformsAndBlocks/invisible_blocks.dart';
+import 'package:desperate_action/components/characters/jumping_enemy.dart';
+import 'package:desperate_action/components/characters/player.dart';
 import 'package:desperate_action/components/trigger.dart';
+import 'package:desperate_action/desperate_action.dart';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
-import 'platform.dart';
+import 'platformsAndBlocks/platform.dart';
 
 // класс world - это специальный класс
 // для инициализации мира, в котором всё и происходит
 class Level extends World {
   final String levelName;
-  late Player player;
-  Level({required this.levelName, required this.player});
+  final Player player;
+  final int? lastCheckpointId;
+  Level({
+    required this.levelName,
+    required this.player,
+    required this.lastCheckpointId,
+  });
   late TiledComponent level;
   // поскольку эти переменные понадобятся нам в других классах,
   // и нет необходимости в этих других классах
@@ -24,10 +31,7 @@ class Level extends World {
   // делаем эти переменные static
   late int tileWidth;
   static late double mapSizeX;
-  static int playerLifes = 3;
-  static int? lastCheckpointId;
-  static late Vector2 currentPlayerSpawnPosition;
-  final Map<int, Vector2> checkpoints = {};
+
   // static Vector2? lastCheckpointPosition;
 
   @override
@@ -94,7 +98,7 @@ class Level extends World {
             if (lastCheckpointId == id) {
               checkpoint.isCurrentCheckpoint = true;
             }
-            checkpoints.addAll({id: flag.position});
+            DesperateAction.checkpoints.addAll({id: flag.position});
             id += 1;
             checkpoint.priority = -1;
             add(checkpoint);
@@ -110,7 +114,7 @@ class Level extends World {
   }
 
   Vector2? getLastCheckpointPlayerPosition() {
-    final position = checkpoints[lastCheckpointId];
+    final position = DesperateAction.checkpoints[lastCheckpointId];
     if (position != null) {
       return Vector2(position.x, position.y) + Vector2.all(64 / 3);
     }
@@ -130,7 +134,7 @@ class Level extends World {
         switch (character.class_) {
           // добавляем игрока
           case 'Player':
-            currentPlayerSpawnPosition =
+            final currentPlayerSpawnPosition =
                 getLastCheckpointPlayerPosition() ?? character.position;
             player.position = currentPlayerSpawnPosition;
             player.size = character.size;
@@ -176,13 +180,14 @@ class Level extends World {
       for (final object in fallingPlatformsLayer.objects) {
         switch (object.class_) {
           case 'Platform':
+            final spriteName = object.properties.getValue('SpriteName');
             final fallOnPlayer = object.properties.getValue('fallOnPlayer');
             final fallWithPlayer = object.properties.getValue('fallWithPlayer');
             final platform = Platform(
               position: object.position,
               size: object.size,
               id: object.id,
-              spriteName: 'Platform3',
+              spriteName: spriteName,
               priority: 1,
               fallOnPlayer: fallOnPlayer,
               fallWithPlayer: fallWithPlayer,
@@ -208,14 +213,11 @@ class Level extends World {
             );
             add(trigger);
             break;
+          case 'Exit':
+            final exit = Exit(position: object.position, size: object.size);
+            add(exit);
         }
       }
     }
-  }
-
-  void resetComplitly() {
-    // for new Level
-    playerLifes = 3;
-    lastCheckpointId = 0;
   }
 }

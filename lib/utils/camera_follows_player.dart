@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:desperate_action/components/level.dart';
-import 'package:desperate_action/components/player.dart';
+import 'package:desperate_action/components/characters/player.dart';
 import 'package:flame/components.dart';
 import 'package:desperate_action/desperate_action.dart';
 
