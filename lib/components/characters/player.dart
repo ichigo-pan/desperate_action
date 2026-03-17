@@ -170,7 +170,7 @@ class Player extends SpriteAnimationGroupComponent
         _controlsEnabled = false;
         xMovement = 0;
         _moveAuto = true;
-        targetFinishPosition = other.x + 100;
+        targetFinishPosition = other.x + 300;
       }
       if (other is Exit) {
         Exit.isOnExit = true;

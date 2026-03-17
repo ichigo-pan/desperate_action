@@ -30,5 +30,4 @@ flutter:
     - assets/images/Enemies/onGround/
     - assets/images/Enemies/jumpingFromEdges/
     - assets/images/FallingPlatform/
-    - assets/images/Checkpoints/Checkpoint/
     - assets/images/Checkpoints/Finish/

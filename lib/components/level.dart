@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:desperate_action/components/checkpoints/checkpoint.dart';
 import 'package:desperate_action/components/checkpoints/exit.dart';
 import 'package:desperate_action/components/platformsAndBlocks/collision_blocks.dart';
 import 'package:desperate_action/components/checkpoints/finish.dart';
@@ -81,24 +80,8 @@ class Level extends World {
   void _loadAllCheckpoints() {
     final checkpointsLayer = level.tileMap.getLayer<ObjectGroup>('Checkpoints');
     if (checkpointsLayer != null) {
-      int id = 0;
       for (final flag in checkpointsLayer.objects) {
         switch (flag.class_) {
-          case 'Checkpoint':
-            final checkpoint = Checkpoint(
-              position: flag.position,
-              size: flag.size,
-              id: id,
-            );
-            if (state.lastCheckpointId == id) {
-              checkpoint.isCurrentCheckpoint = true;
-            }
-            state.checkpoints.addAll({id: flag.position});
-            id += 1;
-            checkpoint.priority = -1;
-            add(checkpoint);
-            break;
-
           case 'Finish':
             final finish = Finish(position: flag.position, size: flag.size);
             add(finish);
@@ -106,14 +89,6 @@ class Level extends World {
         }
       }
     }
-  }
-
-  Vector2? getLastCheckpointPlayerPosition() {
-    final position = state.checkpoints[state.lastCheckpointId];
-    if (position != null) {
-      return Vector2(position.x, position.y) + Vector2(64 / 3, 64 / 2);
-    }
-    return null;
   }
 
   void _loadCharacters() {
@@ -125,9 +100,7 @@ class Level extends World {
         switch (character.class_) {
           // добавляем игрока
           case 'Player':
-            final currentPlayerSpawnPosition =
-                getLastCheckpointPlayerPosition() ?? character.position;
-            player.position = currentPlayerSpawnPosition;
+            player.position = character.position;
             player.size = character.size;
             player.scale.x = 1;
             add(player);

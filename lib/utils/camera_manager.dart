@@ -27,11 +27,7 @@ class CameraManager {
   }
 
   Future<void> resetIfNeeded() async {
-    if (game.state.lastCheckpointId == null) {
-      game.camera.removeFromParent();
-      await initialize();
-    } else {
-      game.camera.viewfinder.position = Vector2(game.player.position.x - 30, 0);
-    }
+    game.camera.removeFromParent();
+    await initialize();
   }
 }
