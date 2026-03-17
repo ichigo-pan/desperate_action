@@ -8,19 +8,30 @@ import 'package:flutter/material.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final game = DesperateAction();
-  // final DesperateAction game = DesperateAction();
+
   runApp(
-    GameWidget(
-      game: game,
-      overlayBuilderMap: {
-        'StartGame': (context, DesperateAction game) =>
-            StartGameOverlay(game: game),
-        'PlayerDied': (context, DesperateAction game) =>
-            PlayerDiedOverlay(game: game),
-        'GameOver': (context, DesperateAction game) =>
-            GameOverOverlay(game: game),
-      },
-      initialActiveOverlays: ['StartGame'],
+    MaterialApp(
+      home: Scaffold(
+        backgroundColor: Colors.black, // цвет пустой зоны вокруг игры
+        body: Center(
+          child: SizedBox(
+            width: game.cameraWidth,
+            height: 350, // высота камеры (450)
+            child: GameWidget(
+              game: game,
+              overlayBuilderMap: {
+                'StartGame': (context, DesperateAction game) =>
+                    StartGameOverlay(game: game),
+                'PlayerDied': (context, DesperateAction game) =>
+                    PlayerDiedOverlay(game: game),
+                'GameOver': (context, DesperateAction game) =>
+                    GameOverOverlay(game: game),
+              },
+              initialActiveOverlays: ['StartGame'],
+            ),
+          ),
+        ),
+      ),
     ),
   );
 }
