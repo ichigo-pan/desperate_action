@@ -8,28 +8,19 @@ import 'package:desperate_action/components/platformsAndBlocks/invisible_blocks.
 import 'package:desperate_action/components/characters/jumping_enemy.dart';
 import 'package:desperate_action/components/characters/player.dart';
 import 'package:desperate_action/components/trigger.dart';
-import 'package:desperate_action/desperate_action.dart';
+import 'package:desperate_action/utils/game_state.dart';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'platformsAndBlocks/platform.dart';
 
-// класс world - это специальный класс
-// для инициализации мира, в котором всё и происходит
 class Level extends World {
   final String levelName;
   final Player player;
-  final int? lastCheckpointId;
-  Level({
-    required this.levelName,
-    required this.player,
-    required this.lastCheckpointId,
-  });
+  final GameState state;
+  Level({required this.levelName, required this.player, required this.state});
   late TiledComponent level;
-  // поскольку эти переменные понадобятся нам в других классах,
-  // и нет необходимости в этих других классах
-  // создавать новые объекты класса level,
-  // делаем эти переменные static
   late int tileWidth;
+  // нужна для понимания до какого момента камера может двигаться
   static late double mapSizeX;
 
   // static Vector2? lastCheckpointPosition;
@@ -37,7 +28,8 @@ class Level extends World {
   @override
   FutureOr<void> onLoad() async {
     // debugMode = true;
-    // грузим background и получаем размеры карты, которые в дальнейшем используем
+    // грузим background и получаем размеры карты,
+    // которые в дальнейшем используем
     level = await TiledComponent.load('$levelName.tmx', Vector2.all(18));
     tileWidth = level.tileMap.map.tileWidth;
     mapSizeX = (level.tileMap.map.width * tileWidth).toDouble();
@@ -48,10 +40,10 @@ class Level extends World {
     // Нужно, чтобы игрок мог ходить, прыгать и падать
     _loadCollisionBlocks();
     _loadAllCheckpoints();
+    _loadFallingPlatforms();
     // грузим всех персонажей - игрока,
     // врагов на земле,
     // врагов выпрыгивающих
-    _loadFallingPlatforms();
     _loadCharacters();
     _loadTriggers();
     return super.onLoad();
@@ -64,10 +56,14 @@ class Level extends World {
       for (final collision in collisionsLayer.objects) {
         switch (collision.class_) {
           case 'InvisibleBlock':
+            final showWhenPlayerGoesFrom = collision.properties.getValue(
+              'showWhenPlayerGoesFrom',
+            );
             final block = InvisibleBlocks(
               position: collision.position,
               size: collision.size,
               spriteName: 'invisibleBlock',
+              playerGoesFrom: showWhenPlayerGoesFrom,
             );
             add(block);
             break;
@@ -83,7 +79,6 @@ class Level extends World {
   }
 
   void _loadAllCheckpoints() {
-    // выбираем нужный нам слой
     final checkpointsLayer = level.tileMap.getLayer<ObjectGroup>('Checkpoints');
     if (checkpointsLayer != null) {
       int id = 0;
@@ -95,10 +90,10 @@ class Level extends World {
               size: flag.size,
               id: id,
             );
-            if (lastCheckpointId == id) {
+            if (state.lastCheckpointId == id) {
               checkpoint.isCurrentCheckpoint = true;
             }
-            DesperateAction.checkpoints.addAll({id: flag.position});
+            state.checkpoints.addAll({id: flag.position});
             id += 1;
             checkpoint.priority = -1;
             add(checkpoint);
@@ -114,22 +109,18 @@ class Level extends World {
   }
 
   Vector2? getLastCheckpointPlayerPosition() {
-    final position = DesperateAction.checkpoints[lastCheckpointId];
+    final position = state.checkpoints[state.lastCheckpointId];
     if (position != null) {
-      return Vector2(position.x, position.y) + Vector2.all(64 / 3);
+      return Vector2(position.x, position.y) + Vector2(64 / 3, 64 / 2);
     }
     return null;
   }
 
   void _loadCharacters() {
-    // выбираем другой слой - Characters
     final charactersSpawnPointsLayer = level.tileMap.getLayer<ObjectGroup>(
       'Characters',
     );
     if (charactersSpawnPointsLayer != null) {
-      // здесь проходимся по объектам в слое
-      // и смотрим на их класс (который мы присвоили в Tiled).
-      // После чего создаём объект нужного класса и передаём ему параметры
       for (final character in charactersSpawnPointsLayer.objects) {
         switch (character.class_) {
           // добавляем игрока

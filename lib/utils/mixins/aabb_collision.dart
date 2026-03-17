@@ -28,8 +28,8 @@ mixin AABBcollision on PositionComponent {
     if (overlapY < overlapX) {
       // Вертикальное столкновение
       return a.center.dy < b.center.dy
-          ? Vector2(0, -1) // игрок снизу
-          : Vector2(0, 1); // игрок сверху
+          ? Vector2(0, -1) // столкновение снизу
+          : Vector2(0, 1); // столкновение сверху
     } else {
       // Горизонтальное столкновение
       return a.center.dx < b.center.dx ? Vector2(-1, 0) : Vector2(1, 0);

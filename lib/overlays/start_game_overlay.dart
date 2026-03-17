@@ -14,8 +14,12 @@ class _StartGameOverlayState extends State<StartGameOverlay> {
     return Center(
       child: FilledButton(
         onPressed: () {
-          widget.game.restartGameEngine(false, 'StartGame');
-          widget.game.gameStarted = true;
+          widget.game.restartAfterOverlay(
+            false,
+            'StartGame',
+            duration: Duration(milliseconds: 40),
+          );
+          widget.game.state.gameStarted = true;
         },
         style: FilledButton.styleFrom(backgroundColor: Colors.pink[300]),
         child: Padding(

@@ -23,7 +23,7 @@ class _PlayerDiedOverlayState extends State<PlayerDiedOverlay> {
                 Image.asset('assets/images/Player/head.png', scale: 0.4),
                 SizedBox(width: 20),
                 Text(
-                  '${widget.game.playerLifes}',
+                  '${widget.game.state.playerLives}',
                   style: TextStyle(
                     fontSize: 68,
                     color: Colors.white,

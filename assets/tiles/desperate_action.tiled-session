@@ -52,7 +52,7 @@
         "Snow.tsx"
     ],
     "project": "desperate_action.tiled-project",
-    "property.type": "string",
+    "property.type": "bool",
     "recentFiles": [
         "Snow.tsx",
         "level-1.tmx",

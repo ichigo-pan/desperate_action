@@ -12,11 +12,13 @@ class InvisibleBlocks extends SpriteComponent
         CollisionCallbacks,
         HasVisibility,
         AABBcollision {
+  String playerGoesFrom;
   String spriteName;
   InvisibleBlocks({
     required super.position,
     required super.size,
     required this.spriteName,
+    required this.playerGoesFrom,
   });
 
   @override
@@ -41,7 +43,9 @@ class InvisibleBlocks extends SpriteComponent
         final b = otherHitboxRect(other);
         final (overlapX, overlapY) = computeOverlap(a, b);
         final normal = computeNormal(a, b, overlapX, overlapY);
-        if (normal.y < 0) {
+        if (normal.y < 0 && playerGoesFrom == 'down' ||
+            normal.y > 0 && playerGoesFrom == 'up' ||
+            normal.x < 0 && playerGoesFrom == 'right') {
           isVisible = true;
         }
       }

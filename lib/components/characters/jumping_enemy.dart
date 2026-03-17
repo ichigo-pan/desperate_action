@@ -32,7 +32,7 @@ class JumpingEnemy extends SpriteAnimationComponent
     birdCenter = position.x + width / 2;
   }
 
-  final double moveSpeed = 600;
+  final double moveSpeed = 560;
   final Vector2 velocity = Vector2.zero();
   final double hitboxRadius = 10;
   @override
@@ -55,7 +55,7 @@ class JumpingEnemy extends SpriteAnimationComponent
 
   @override
   void update(double dt) {
-    if (game.gameStarted) {
+    if (game.state.gameStarted) {
       if (doFall) {
         _move(dt);
         _respawnWhenNotInCamera();

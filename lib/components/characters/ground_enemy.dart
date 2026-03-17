@@ -60,7 +60,7 @@ class GroundEnemy extends SpriteAnimationGroupComponent
 
   @override
   void update(double dt) {
-    if (game.gameStarted) {
+    if (game.state.gameStarted) {
       _checkWherePlayer();
 
       if (!isOnGround) _applyGravity(dt);

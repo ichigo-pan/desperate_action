@@ -26,7 +26,7 @@ class _GameOverOverlayState extends State<GameOverOverlay> {
                     Image.asset('assets/images/Player/head.png', scale: 0.4),
                     SizedBox(width: 20),
                     Text(
-                      '${widget.game.playerLifes}',
+                      '${widget.game.state.playerLives}',
                       style: TextStyle(
                         fontSize: 68,
                         color: Colors.white,
@@ -39,7 +39,11 @@ class _GameOverOverlayState extends State<GameOverOverlay> {
                 SizedBox(height: 10),
                 FilledButton(
                   onPressed: () {
-                    widget.game.restartGameEngine(true, 'GameOver');
+                    widget.game.restartAfterOverlay(
+                      true,
+                      'GameOver',
+                      duration: Duration(milliseconds: 40),
+                    );
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.pink[300],

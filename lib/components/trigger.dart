@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:desperate_action/components/characters/player.dart';
+import 'package:desperate_action/components/checkpoints/finish.dart';
 import 'package:desperate_action/desperate_action.dart';
 import 'package:desperate_action/utils/fallable.dart';
 import 'package:flame/collisions.dart';
@@ -28,11 +29,16 @@ class Trigger extends PositionComponent
   ) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is Player) {
-      final parentObject = game.world.children.whereType<Fallable>().where(
+      final parentObjArr = game.world.children.whereType<Fallable>().where(
         (platform) => platform.id == objectId,
       );
-      if (parentObject.isEmpty) return;
-      parentObject.elementAt(0).doFall = true;
+      if (parentObjArr.isEmpty) return;
+      final parentObj = parentObjArr.elementAt(0);
+      if (parentObj.id == 32 && !Finish.checkedOnFinish) {
+        return;
+      } else {
+        parentObj.doFall = true;
+      }
     }
   }
 }

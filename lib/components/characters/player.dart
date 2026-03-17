@@ -21,6 +21,7 @@ enum PlayerState {
 
   final String name;
   final int amount;
+
   const PlayerState(this.name, this.amount);
 }
 
@@ -33,19 +34,21 @@ class Player extends SpriteAnimationGroupComponent
   Player({super.position, super.size});
 
   final Vector2 velocity = Vector2.zero();
-  final double moveSpeed = 100;
-  final double jumpForce = 300;
-  final double gravity = 9.8;
-  final double maxVelocity = 200;
-  final double _bounceHeight = 150;
+  final double moveSpeed = 140;
+  final double jumpForce = 340;
+  final double gravity = 900;
+  final double maxVelocity = 380;
+  final double _bounceHeight = 320;
+  int xMovement = 0;
 
   double? targetFinishPosition;
 
-  int xMovement = 0;
   bool pressedJump = false;
-  bool isOnGround = false;
+  bool isOnGround = true;
   bool _controlsEnabled = true;
-  bool _isUserMove = true;
+  bool _moveAuto = true;
+  bool _wasAutoMoved = false;
+  bool _isDead = false;
   bool doExitFromLevel = false;
 
   final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
@@ -66,7 +69,7 @@ class Player extends SpriteAnimationGroupComponent
       ),
     );
     _controlsEnabled = false;
-    _isUserMove = true;
+    _moveAuto = false;
     velocity.setZero();
     // Добавляем таймер, который включит управление через 1 секунду
     add(
@@ -78,20 +81,19 @@ class Player extends SpriteAnimationGroupComponent
         },
       ),
     );
-
     return super.onLoad();
   }
 
   @override
   void update(double dt) {
-    if (game.gameStarted) {
-      if (_isUserMove) {
+    if (game.state.gameStarted && !_isDead) {
+      if (_controlsEnabled) {
         _updateMovements(dt);
-      } else {
-        _moveRight(dt);
+      } else if (_moveAuto) {
+        _autoMoveRight(dt);
       }
     }
-    if (!isOnGround) _applyGravity(dt);
+    if (!isOnGround && isLoaded) _applyGravity(dt);
     _changeSpriteScale();
     _changeAnimation();
     _checkIfFallFromScreen();
@@ -101,22 +103,24 @@ class Player extends SpriteAnimationGroupComponent
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
+    if (!_isDead) {
+      if (other is CollisionBlocks ||
+          other is Platform ||
+          (other is InvisibleBlocks && other.isVisible)) {
+        final (normal, offset) = resolveCollision(other);
 
-    if (other is CollisionBlocks ||
-        other is Platform ||
-        (other is InvisibleBlocks && other.isVisible)) {
-      final (normal, offset) = resolveCollision(other);
-
-      // Дополнительная логика, зависящая от направления
-      if (normal.y < 0) {
-        // Столкновение снизу – стоим на земле
-        isOnGround = true;
-        velocity.y = 0;
-      } else if (normal.y > 0) {
-        // Удар головой
-        if (velocity.y < 0) velocity.y = 0;
+        // Дополнительная логика, зависящая от направления
+        if (normal.y < 0 && velocity.y >= 0) {
+          // Столкновение снизу – стоим на земле
+          isOnGround = true;
+          velocity.y = 0;
+        } else if (normal.y > 0) {
+          // Удар головой
+          if (velocity.y < 0) velocity.y = 0;
+        }
+        // Удар боком
+        if (normal.x != 0) velocity.x = 0;
       }
-      if (normal.x != 0) velocity.x = 0;
     }
   }
 
@@ -139,38 +143,44 @@ class Player extends SpriteAnimationGroupComponent
     PositionComponent other,
   ) {
     super.onCollisionStart(intersectionPoints, other);
-    if (other is GroundEnemy) {
-      final (normal, offset) = resolveCollision(other);
-      if (normal.y < 0) {
-        other.die();
-        velocity.y = -_bounceHeight;
-      } else {
-        _die();
+    if (!_isDead) {
+      if (other is GroundEnemy) {
+        final (normal, offset) = resolveCollision(other);
+        if (normal.y < 0 && velocity.y >= 0) {
+          other.die();
+          velocity.y = -_bounceHeight;
+        } else {
+          _die(true);
+        }
       }
-    }
-    if (other is JumpingEnemy) {
-      _die();
-    }
-    if (other is Platform) {
-      if (other.fallOnPlayer && other.velocity.y > 0) {
-        _die();
-      } else if (other.fallWithPlayer) {
-        isOnGround = true;
+      if (other is JumpingEnemy) {
+        _die(true);
       }
-    }
-    if (other is Finish) {
-      _isUserMove = false;
-      targetFinishPosition = other.x + 100;
-    }
-    if (other is Exit) {
-      Exit.isOnExit = true;
-      print(Exit.isOnExit);
+      if (other is Platform) {
+        if (other.fallOnPlayer && other.velocity.y > 0) {
+          _die(true);
+        } else if (other.fallWithPlayer) {
+          isOnGround = true;
+        }
+      }
+      if (other is Finish) {
+        // проверяем, сталкивались ли уже с финишом. Нельзя использовать статическое свойство, потому что коллизии вызываются не так как хотелось бы
+        if (_wasAutoMoved) return;
+        // отключаем движение от клавиатуры и включаем автодвижение
+        _controlsEnabled = false;
+        xMovement = 0;
+        _moveAuto = true;
+        targetFinishPosition = other.x + 100;
+      }
+      if (other is Exit) {
+        Exit.isOnExit = true;
+      }
     }
   }
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
-    if (!_controlsEnabled) return false;
+    if (!_controlsEnabled) return true;
     // horizontal movemets
     xMovement = 0;
     final isKeyLeft =
@@ -193,6 +203,7 @@ class Player extends SpriteAnimationGroupComponent
         keysPressed.contains(LogicalKeyboardKey.arrowDown);
 
     if (doExitFromLevel && Exit.isOnExit) _exitFromLevel();
+
     return super.onKeyEvent(event, keysPressed);
   }
 
@@ -219,42 +230,31 @@ class Player extends SpriteAnimationGroupComponent
     position.x += velocity.x * dt;
   }
 
-  void _moveRight(double dt) {
+  void _autoMoveRight(double dt) {
     // Двигаемся вправо с постоянной скоростью
     velocity.x = moveSpeed;
     position.x += velocity.x * dt;
 
     // Если достигли или превысили цель, останавливаем автоматическое движение
     if (position.x >= targetFinishPosition!) {
+      _wasAutoMoved = true;
+      _moveAuto = false;
       velocity.x = 0;
-      _isUserMove = true;
+      _controlsEnabled = true;
     }
   }
 
   void _changeAnimation() {
     if (isOnGround) {
-      if (velocity.x != 0) {
-        current = PlayerState.run;
-      } else {
-        current = PlayerState.idle;
-      }
+      current = velocity.x != 0 ? PlayerState.run : PlayerState.idle;
     } else {
-      if (velocity.y < 0) {
-        current = PlayerState.jump;
-      } else if (velocity.y > 0) {
-        current = PlayerState.fall;
-      }
+      current = velocity.y < 0 ? PlayerState.jump : PlayerState.fall;
     }
   }
 
   void _changeSpriteScale() {
-    if (velocity.x < 0 && scale.x > 0) {
+    if (velocity.x < 0 && scale.x > 0 || velocity.x > 0 && scale.x < 0) {
       flipHorizontallyAroundCenter();
-      // position.x += 5;
-    }
-    if (velocity.x > 0 && scale.x < 0) {
-      flipHorizontallyAroundCenter();
-      // position.x -= 5;
     }
   }
 
@@ -262,24 +262,38 @@ class Player extends SpriteAnimationGroupComponent
     velocity.y = -jumpForce;
     position.y += velocity.y * dt;
     pressedJump = false;
-    // isOnGround = false;
   }
 
   void _applyGravity(double dt) {
-    velocity.y += gravity;
+    if (velocity.y < 0) {
+      velocity.y += gravity * 0.7 * dt; // медленнее вверх
+    } else {
+      if (!_isDead) {
+        velocity.y += gravity * 1.3 * dt; // быстрее вниз
+      }
+    }
+
     velocity.y = velocity.y.clamp(-jumpForce, maxVelocity);
     position.y += velocity.y * dt;
   }
 
   void _checkIfFallFromScreen() {
-    if (position.y > game.cameraHeight) _die();
+    if (position.y + height >= game.cameraHeight) _die(false);
   }
 
-  void _die() {
-    game.playerDied();
+  void _die(bool doJump) {
+    if (_isDead) return;
+    _isDead = true;
+    _controlsEnabled = false;
+    velocity.x = 0;
+    isOnGround = false;
+    if (doJump) velocity.y = -300;
+    Future.delayed(Duration(seconds: 1), () {
+      game.onPlayerDeath();
+    });
   }
 
   void _exitFromLevel() {
-    game.exitLevel();
+    game.onLevelFinished();
   }
 }

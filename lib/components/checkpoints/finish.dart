@@ -17,7 +17,7 @@ enum FinishState {
 class Finish extends SpriteAnimationComponent
     with HasGameReference<DesperateAction>, CollisionCallbacks {
   Finish({required super.position, required super.size});
-  bool _checkedOnFinish = false;
+  static bool checkedOnFinish = false;
 
   final CustomRectangleHitbox hitbox = CustomRectangleHitbox(
     positionX: 19,
@@ -68,8 +68,8 @@ class Finish extends SpriteAnimationComponent
   ) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is Player) {
-      if (!_checkedOnFinish) {
-        _checkedOnFinish = true;
+      if (!checkedOnFinish) {
+        checkedOnFinish = true;
         _finishPressed();
       }
     }

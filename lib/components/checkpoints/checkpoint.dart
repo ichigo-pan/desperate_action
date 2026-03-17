@@ -75,7 +75,7 @@ class Checkpoint extends SpriteAnimationComponent
       if (!isCurrentCheckpoint) {
         isCurrentCheckpoint = true;
         _raiseCheckpoint();
-        game.lastCheckpointId = id;
+        game.state.lastCheckpointId = id;
       }
     }
   }
