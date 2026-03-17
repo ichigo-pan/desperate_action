@@ -1,3 +1,7 @@
-# desperate_action
+# Desperate Action
 
-A new Flutter project.
+Credits:
+
+- Game assets by Kenney
+- Sprites by Pixel Frog
+- Backgrounds by GrafxKid
