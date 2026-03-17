@@ -15,7 +15,7 @@ class _PlayerDiedOverlayState extends State<PlayerDiedOverlay> {
       children: [
         Expanded(
           child: Container(
-            decoration: BoxDecoration(color: Colors.black),
+            decoration: BoxDecoration(color: Color(0xFFbaebff)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
 

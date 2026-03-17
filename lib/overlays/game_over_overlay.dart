@@ -15,7 +15,7 @@ class _GameOverOverlayState extends State<GameOverOverlay> {
       children: [
         Expanded(
           child: Container(
-            decoration: BoxDecoration(color: Colors.black),
+            decoration: BoxDecoration(color: Color(0xFFbaebff)),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

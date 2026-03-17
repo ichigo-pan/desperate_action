@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:desperate_action/components/checkpoints/finish.dart';
 import 'package:desperate_action/components/characters/player.dart';
 import 'package:desperate_action/utils/camera_manager.dart';
@@ -21,6 +22,11 @@ class DesperateAction extends FlameGame
 
   final double cameraWidth = 500;
   final double cameraHeight = 450;
+
+  @override
+  Color backgroundColor() {
+    return Color(0xFFbaebff);
+  }
 
   @override
   FutureOr<void> onLoad() async {

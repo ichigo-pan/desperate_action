@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -28,36 +27,12 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>desperate_action</title>
   <link rel="manifest" href="manifest.json">
-  <style>
-    /* Сделать canvas «pixelated» — отключает сглаживание при масштабировании */
-    canvas {
-      image-rendering: pixelated !important;
-      image-rendering: crisp-edges !important;
-      /* fallback */
-      image-rendering: -moz-crisp-edges;
-      image-rendering: -o-pixelated;
-      image-rendering: -webkit-optimize-contrast;
-    }
-
-    /* Чтобы canvas занимал весь экран без размытия */
-    html,
-    body,
-    #flutter_container {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-  </style>
 </head>
-
 <body>
   <script src="flutter_bootstrap.js" async></script>
 </body>
-
 </html>
