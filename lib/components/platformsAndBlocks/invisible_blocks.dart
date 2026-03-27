@@ -39,7 +39,6 @@ class InvisibleBlocks extends SpriteComponent
     if (other is Player) {
       if (!isVisible) {
         final a = myHitboxRect;
-        // final a = otherHitboxRect(this);
         final b = otherHitboxRect(other);
         final (overlapX, overlapY) = computeOverlap(a, b);
         final normal = computeNormal(a, b, overlapX, overlapY);

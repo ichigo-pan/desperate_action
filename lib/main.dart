@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   final game = DesperateAction();
-  // final DesperateAction game = DesperateAction();
+
   runApp(
     GameWidget(
       game: game,

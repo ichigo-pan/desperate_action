@@ -29,7 +29,6 @@ class Platform extends SpriteComponent
 
   @override
   FutureOr<void> onLoad() {
-    // debugMode = true;
     sprite = Sprite(game.images.fromCache('FallingPlatform/$spriteName.png'));
     add(RectangleHitbox(collisionType: CollisionType.passive));
     return super.onLoad();
@@ -38,9 +37,7 @@ class Platform extends SpriteComponent
   @override
   void update(double dt) {
     super.update(dt);
-    if (doFall) {
-      _fall(dt);
-    }
+    if (doFall) _fall(dt);
   }
 
   void _fall(double dt) {

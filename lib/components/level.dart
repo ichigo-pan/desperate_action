@@ -17,39 +17,30 @@ class Level extends World {
   final Player player;
   final GameState state;
   Level({required this.levelName, required this.player, required this.state});
+
   late TiledComponent level;
   late int tileWidth;
-  // нужна для понимания до какого момента камера может двигаться
-  static late double mapSizeX;
 
-  // static Vector2? lastCheckpointPosition;
+  static late double mapSizeX;
 
   @override
   FutureOr<void> onLoad() async {
-    // debugMode = true;
-    // грузим background и получаем размеры карты,
-    // которые в дальнейшем используем
     level = await TiledComponent.load('$levelName.tmx', Vector2.all(18));
     tileWidth = level.tileMap.map.tileWidth;
     mapSizeX = (level.tileMap.map.width * tileWidth).toDouble();
     level.priority = -1;
     add(level);
-    // грузим блоки, по которым игрок может ходить
-    // или с которыми может сталкиваться.
-    // Нужно, чтобы игрок мог ходить, прыгать и падать
+
     _loadCollisionBlocks();
     _loadAllCheckpoints();
     _loadFallingPlatforms();
-    // грузим всех персонажей - игрока,
-    // врагов на земле,
-    // врагов выпрыгивающих
     _loadCharacters();
     _loadTriggers();
+
     return super.onLoad();
   }
 
   void _loadCollisionBlocks() {
-    // выбираем нужный нам слой
     final collisionsLayer = level.tileMap.getLayer<ObjectGroup>('Collisions');
     if (collisionsLayer != null) {
       for (final collision in collisionsLayer.objects) {
@@ -66,6 +57,7 @@ class Level extends World {
             );
             add(block);
             break;
+
           default:
             final block = CollisionBlocks()
               ..position = collision.position
@@ -98,13 +90,13 @@ class Level extends World {
     if (charactersSpawnPointsLayer != null) {
       for (final character in charactersSpawnPointsLayer.objects) {
         switch (character.class_) {
-          // добавляем игрока
           case 'Player':
             player.position = character.position;
             player.size = character.size;
             player.scale.x = 1;
             add(player);
             break;
+
           case 'EnemyOnGround':
             final moveDirection = character.properties.getValue(
               'startDirection',
@@ -117,6 +109,7 @@ class Level extends World {
             groundEnemy.priority = -1;
             add(groundEnemy);
             break;
+
           case 'JumpingEnemy':
             final moveDirection = character.properties.getValue(
               'startDirection',

@@ -46,7 +46,6 @@ class GroundEnemy extends SpriteAnimationGroupComponent
 
   @override
   FutureOr<void> onLoad() {
-    // debugMode = true;
     _loadAllAnimations();
     current = GroundEnemyState.run;
     add(

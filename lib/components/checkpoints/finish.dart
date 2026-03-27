@@ -28,7 +28,6 @@ class Finish extends SpriteAnimationComponent
 
   @override
   FutureOr<void> onLoad() {
-    // debugMode = true;
     add(
       RectangleHitbox(
         position: Vector2(hitbox.positionX, hitbox.positionY),

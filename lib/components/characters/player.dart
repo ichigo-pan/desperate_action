@@ -60,7 +60,6 @@ class Player extends SpriteAnimationGroupComponent
 
   @override
   FutureOr<void> onLoad() {
-    // debugMode = true;
     _loadAllAnimations();
     add(
       RectangleHitbox(
@@ -71,7 +70,7 @@ class Player extends SpriteAnimationGroupComponent
     _controlsEnabled = false;
     _moveAuto = false;
     velocity.setZero();
-    // Добавляем таймер, который включит управление через 1 секунду
+    // enable control of character after 1 second
     add(
       TimerComponent(
         period: 1.0,
@@ -109,7 +108,6 @@ class Player extends SpriteAnimationGroupComponent
           (other is InvisibleBlocks && other.isVisible)) {
         final (normal, offset) = resolveCollision(other);
 
-        // Дополнительная логика, зависящая от направления
         if (normal.y < 0 && velocity.y >= 0) {
           // Столкновение снизу – стоим на земле
           isOnGround = true;
@@ -164,7 +162,6 @@ class Player extends SpriteAnimationGroupComponent
         }
       }
       if (other is Finish) {
-        // проверяем, сталкивались ли уже с финишом. Нельзя использовать статическое свойство, потому что коллизии вызываются не так как хотелось бы
         if (_wasAutoMoved) return;
         // отключаем движение от клавиатуры и включаем автодвижение
         _controlsEnabled = false;

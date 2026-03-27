@@ -40,7 +40,6 @@ class JumpingEnemy extends SpriteAnimationComponent
 
   @override
   FutureOr<void> onLoad() {
-    // debugMode = true;
     _changeMoveDirection();
     animation = _loadAnimation(JumpingEnemyState.fly);
     add(

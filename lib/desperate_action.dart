@@ -9,8 +9,6 @@ import 'package:desperate_action/utils/overlay_manager.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 
-enum Overlays { playerDied, gameOver }
-
 class DesperateAction extends FlameGame
     with HasKeyboardHandlerComponents, HasCollisionDetection {
   late final GameState state;
@@ -30,7 +28,6 @@ class DesperateAction extends FlameGame
 
   @override
   FutureOr<void> onLoad() async {
-    // debugMode = true;
     state = GameState();
     levelManager = LevelManager(this);
     cameraManager = CameraManager(this);
