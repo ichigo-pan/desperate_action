@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:desperate_action/components/checkpoints/exit.dart';
+import 'package:desperate_action/components/triggers/exit.dart';
 import 'package:desperate_action/components/checkpoints/finish.dart';
 import 'package:desperate_action/components/platformsAndBlocks/invisible_blocks.dart';
 import 'package:flutter/services.dart';

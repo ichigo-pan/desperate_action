@@ -26,7 +26,6 @@ class LevelManager {
 
     game.player.removeFromParent();
     game.world.removeFromParent();
-    game.state.checkpoints.clear();
 
     if (fullReset) {
       game.state.reset();

@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'package:desperate_action/components/checkpoints/exit.dart';
+import 'package:desperate_action/components/triggers/exit.dart';
 import 'package:desperate_action/components/platformsAndBlocks/collision_blocks.dart';
 import 'package:desperate_action/components/checkpoints/finish.dart';
 import 'package:desperate_action/components/characters/ground_enemy.dart';
 import 'package:desperate_action/components/platformsAndBlocks/invisible_blocks.dart';
 import 'package:desperate_action/components/characters/jumping_enemy.dart';
 import 'package:desperate_action/components/characters/player.dart';
-import 'package:desperate_action/components/trigger.dart';
+import 'package:desperate_action/components/triggers/trigger.dart';
 import 'package:desperate_action/utils/game_state.dart';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
