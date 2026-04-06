@@ -69,7 +69,6 @@ class Player extends SpriteAnimationGroupComponent
     );
     _controlsEnabled = false;
     _moveAuto = false;
-    velocity.setZero();
     // enable control of character after 1 second
     add(
       TimerComponent(
